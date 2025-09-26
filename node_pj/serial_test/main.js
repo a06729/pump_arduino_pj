@@ -1,4 +1,4 @@
-const { SerialPort } = require('serialport');
+const { SerialPort ,DelimiterParser } = require('serialport');
 
 // 포트 설정 (여기를 수정하세요)
 const portName = 'COM3'; // Windows: COM3, Linux: /dev/ttyUSB0
@@ -14,8 +14,12 @@ const port = new SerialPort({
     autoOpen: false
 });
 
+
+const delimiter = Buffer.from('\r', 'utf8');
+const parser = port.pipe(new DelimiterParser({ delimiter: delimiter }));
+
 // 수신된 모든 바이트를 출력
-port.on('data', (data) => {
+parser.on('data', (data) => {
     console.log('\n--- 데이터 수신 ---');
     console.log('길이:', data.length, '바이트');
     
@@ -65,24 +69,24 @@ port.open((err) => {
     console.log('포트 연결 성공! 데이터를 기다리는 중...');
     console.log('Arduino에서 데이터를 보내보세요.');
     console.log('Ctrl+C로 종료\n');
-    
+    startManualInput();
     // 1초마다 테스트 메시지 전송
-    let counter = 0;
-    const testInterval = setInterval(() => {
-        counter++;
-        const testMsg = `test${counter}`;
-        console.log(`[송신] "${testMsg}"`);
-        port.write(testMsg + '\r', (err) => {
-            if (err) console.log('송신 에러:', err.message);
-        });
+    // let counter = 0;
+    // const testInterval = setInterval(() => {
+    //     counter++;
+    //     const testMsg = `test${counter}`;
+    //     console.log(`[송신] "${testMsg}"`);
+    //     port.write(testMsg + '\r', (err) => {
+    //         if (err) console.log('송신 에러:', err.message);
+    //     });
         
-        // 10번 전송 후 중지
-        if (counter >= 10) {
-            clearInterval(testInterval);
-            console.log('\n테스트 메시지 전송 완료. 수동 입력 모드...\n');
-            startManualInput();
-        }
-    }, 1000);
+    //     // 10번 전송 후 중지
+    //     if (counter >= 10) {
+    //         clearInterval(testInterval);
+    //         console.log('\n테스트 메시지 전송 완료. 수동 입력 모드...\n');
+    //         startManualInput();
+    //     }
+    // }, 1000);
 });
 
 // 수동 입력 시작
