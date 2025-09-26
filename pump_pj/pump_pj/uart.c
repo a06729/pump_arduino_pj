@@ -9,7 +9,8 @@
 // RS-485 방향 제어 핀 정의
 #define RS485_PORT PORTD
 #define RS485_DDR DDRD
-#define RS485_DE_PIN PD3 // Directional Enable (Active High)
+
+#define RS485_DE_PIN PD3 // Directional Enable (Active High) 
 #define RS485_RE_PIN PD2 // Receive Enable (Active Low)
 
 volatile uint8_t tx_buffer[USART_TX_BUFFER_SIZE];
