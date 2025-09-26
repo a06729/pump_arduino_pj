@@ -3,31 +3,31 @@ pump_pj.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  000003ea  2**0
+  0 .data         00000000  00800100  00800100  00000414  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         00000376  00000000  00000000  00000074  2**1
+  1 .text         000003a0  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          0000008d  00800100  00800100  000003ea  2**0
+  2 .bss          0000008d  00800100  00800100  00000414  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  000003ea  2**0
+  3 .comment      00000030  00000000  00000000  00000414  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  0000041c  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000444  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 000000b0  00000000  00000000  0000045c  2**0
+  5 .debug_aranges 000000b0  00000000  00000000  00000484  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00000bf6  00000000  00000000  0000050c  2**0
+  6 .debug_info   00000bf6  00000000  00000000  00000534  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 000008f3  00000000  00000000  00001102  2**0
+  7 .debug_abbrev 000008f3  00000000  00000000  0000112a  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   0000063f  00000000  00000000  000019f5  2**0
+  8 .debug_line   00000669  00000000  00000000  00001a1d  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  000001d0  00000000  00000000  00002034  2**2
+  9 .debug_frame  000001d0  00000000  00000000  00002088  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000004b0  00000000  00000000  00002204  2**0
+ 10 .debug_str    000004f8  00000000  00000000  00002258  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    000004b5  00000000  00000000  000026b4  2**0
+ 11 .debug_loc    000004b5  00000000  00000000  00002750  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000080  00000000  00000000  00002b69  2**0
+ 12 .debug_ranges 00000080  00000000  00000000  00002c05  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -82,42 +82,24 @@ Disassembly of section .text:
   80:	b2 07       	cpc	r27, r18
   82:	e1 f7       	brne	.-8      	; 0x7c <.do_clear_bss_loop>
   84:	0e 94 48 00 	call	0x90	; 0x90 <main>
-  88:	0c 94 b9 01 	jmp	0x372	; 0x372 <_exit>
+  88:	0c 94 ce 01 	jmp	0x39c	; 0x39c <_exit>
 
 0000008c <__bad_interrupt>:
   8c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
 00000090 <main>:
-#include "uart.h"
-#include "timer.h"
-
-int main(void)
-{
-	uart_init(9600);
   90:	60 e8       	ldi	r22, 0x80	; 128
   92:	75 e2       	ldi	r23, 0x25	; 37
   94:	80 e0       	ldi	r24, 0x00	; 0
   96:	90 e0       	ldi	r25, 0x00	; 0
-  98:	0e 94 36 01 	call	0x26c	; 0x26c <uart_init>
-	timer0_init();
+  98:	0e 94 42 01 	call	0x284	; 0x284 <uart_init>
   9c:	0e 94 b5 00 	call	0x16a	; 0x16a <timer0_init>
-	sei();
   a0:	78 94       	sei
-    /* Replace with your application code */
-    while (1) 
-    {
-		//uart_print("Received and echoed!\n");
-        if(uart_is_available()) {
-  a2:	0e 94 8e 01 	call	0x31c	; 0x31c <uart_is_available>
+  a2:	0e 94 a3 01 	call	0x346	; 0x346 <uart_is_available>
   a6:	88 23       	and	r24, r24
   a8:	e1 f3       	breq	.-8      	; 0xa2 <main+0x12>
-            // 데이터를 한 바이트 읽어옵니다.
-            uint8_t received_data = uart_rx();
-  aa:	0e 94 70 01 	call	0x2e0	; 0x2e0 <uart_rx>
-
-            // 받은 데이터를 그대로 다시 전송합니다.
-            uart_tx(received_data);
-  ae:	0e 94 4f 01 	call	0x29e	; 0x29e <uart_tx>
+  aa:	0e 94 85 01 	call	0x30a	; 0x30a <uart_rx>
+  ae:	0e 94 61 01 	call	0x2c2	; 0x2c2 <uart_tx>
   b2:	f7 cf       	rjmp	.-18     	; 0xa2 <main+0x12>
 
 000000b4 <__vector_16>:
@@ -223,7 +205,7 @@ volatile uint8_t rx_head = 0;
 volatile uint8_t rx_tail = 0;
 
 
-ISR(USART_RX_vect){
+ISR(USART_RX_vect) {
  1a4:	1f 92       	push	r1
  1a6:	0f 92       	push	r0
  1a8:	0f b6       	in	r0, 0x3f	; 63
@@ -250,7 +232,7 @@ ISR(USART_RX_vect){
  1d2:	9f 6f       	ori	r25, 0xFF	; 255
  1d4:	01 96       	adiw	r24, 0x01	; 1
 
-	if(next_head == rx_tail) {
+	if (next_head == rx_tail) {
  1d6:	20 91 09 01 	lds	r18, 0x0109	; 0x800109 <rx_tail>
  1da:	28 17       	cp	r18, r24
  1dc:	41 f0       	breq	.+16     	; 0x1ee <__vector_18+0x4a>
@@ -280,7 +262,7 @@ ISR(USART_RX_vect){
 
 00000204 <__vector_19>:
 
-ISR(USART_UDRE_vect){
+ISR(USART_UDRE_vect) {
  204:	1f 92       	push	r1
  206:	0f 92       	push	r0
  208:	0f b6       	in	r0, 0x3f	; 63
@@ -290,212 +272,246 @@ ISR(USART_UDRE_vect){
  210:	9f 93       	push	r25
  212:	ef 93       	push	r30
  214:	ff 93       	push	r31
-	if(tx_head == tx_tail){
+	if (tx_head == tx_tail) {
  216:	90 91 0c 01 	lds	r25, 0x010C	; 0x80010c <tx_head>
  21a:	80 91 0b 01 	lds	r24, 0x010B	; 0x80010b <tx_tail>
  21e:	98 13       	cpse	r25, r24
- 220:	06 c0       	rjmp	.+12     	; 0x22e <__vector_19+0x2a>
+ 220:	12 c0       	rjmp	.+36     	; 0x246 <__vector_19+0x42>
 		UCSR0B &= ~(1 << UDRIE0);
  222:	e1 ec       	ldi	r30, 0xC1	; 193
  224:	f0 e0       	ldi	r31, 0x00	; 0
  226:	80 81       	ld	r24, Z
  228:	8f 7d       	andi	r24, 0xDF	; 223
  22a:	80 83       	st	Z, r24
+		
+		// 전송 완료 대기 및 수신 모드 전환
+		loop_until_bit_is_set(UCSR0A, TXC0);
+ 22c:	80 91 c0 00 	lds	r24, 0x00C0	; 0x8000c0 <__TEXT_REGION_LENGTH__+0x7f80c0>
+ 230:	86 ff       	sbrs	r24, 6
+ 232:	fc cf       	rjmp	.-8      	; 0x22c <__vector_19+0x28>
+		RS485_PORT &= ~((1 << RS485_DE_PIN) | (1 << RS485_RE_PIN));
+ 234:	8b b1       	in	r24, 0x0b	; 11
+ 236:	83 7f       	andi	r24, 0xF3	; 243
+ 238:	8b b9       	out	0x0b, r24	; 11
+		UCSR0A |= (1 << TXC0);
+ 23a:	e0 ec       	ldi	r30, 0xC0	; 192
+ 23c:	f0 e0       	ldi	r31, 0x00	; 0
+ 23e:	80 81       	ld	r24, Z
+ 240:	80 64       	ori	r24, 0x40	; 64
+ 242:	80 83       	st	Z, r24
 		return;
- 22c:	16 c0       	rjmp	.+44     	; 0x25a <__vector_19+0x56>
+ 244:	16 c0       	rjmp	.+44     	; 0x272 <__vector_19+0x6e>
 	}
 
 	UDR0 = tx_buffer[tx_tail];
- 22e:	e0 91 0b 01 	lds	r30, 0x010B	; 0x80010b <tx_tail>
- 232:	f0 e0       	ldi	r31, 0x00	; 0
- 234:	e3 5b       	subi	r30, 0xB3	; 179
- 236:	fe 4f       	sbci	r31, 0xFE	; 254
- 238:	80 81       	ld	r24, Z
- 23a:	80 93 c6 00 	sts	0x00C6, r24	; 0x8000c6 <__TEXT_REGION_LENGTH__+0x7f80c6>
+ 246:	e0 91 0b 01 	lds	r30, 0x010B	; 0x80010b <tx_tail>
+ 24a:	f0 e0       	ldi	r31, 0x00	; 0
+ 24c:	e3 5b       	subi	r30, 0xB3	; 179
+ 24e:	fe 4f       	sbci	r31, 0xFE	; 254
+ 250:	80 81       	ld	r24, Z
+ 252:	80 93 c6 00 	sts	0x00C6, r24	; 0x8000c6 <__TEXT_REGION_LENGTH__+0x7f80c6>
 	tx_tail = (tx_tail + 1) % USART_TX_BUFFER_SIZE;
- 23e:	80 91 0b 01 	lds	r24, 0x010B	; 0x80010b <tx_tail>
- 242:	90 e0       	ldi	r25, 0x00	; 0
- 244:	01 96       	adiw	r24, 0x01	; 1
- 246:	8f 73       	andi	r24, 0x3F	; 63
- 248:	90 78       	andi	r25, 0x80	; 128
- 24a:	99 23       	and	r25, r25
- 24c:	24 f4       	brge	.+8      	; 0x256 <__vector_19+0x52>
- 24e:	01 97       	sbiw	r24, 0x01	; 1
- 250:	80 6c       	ori	r24, 0xC0	; 192
- 252:	9f 6f       	ori	r25, 0xFF	; 255
- 254:	01 96       	adiw	r24, 0x01	; 1
- 256:	80 93 0b 01 	sts	0x010B, r24	; 0x80010b <tx_tail>
+ 256:	80 91 0b 01 	lds	r24, 0x010B	; 0x80010b <tx_tail>
+ 25a:	90 e0       	ldi	r25, 0x00	; 0
+ 25c:	01 96       	adiw	r24, 0x01	; 1
+ 25e:	8f 73       	andi	r24, 0x3F	; 63
+ 260:	90 78       	andi	r25, 0x80	; 128
+ 262:	99 23       	and	r25, r25
+ 264:	24 f4       	brge	.+8      	; 0x26e <__vector_19+0x6a>
+ 266:	01 97       	sbiw	r24, 0x01	; 1
+ 268:	80 6c       	ori	r24, 0xC0	; 192
+ 26a:	9f 6f       	ori	r25, 0xFF	; 255
+ 26c:	01 96       	adiw	r24, 0x01	; 1
+ 26e:	80 93 0b 01 	sts	0x010B, r24	; 0x80010b <tx_tail>
 }
- 25a:	ff 91       	pop	r31
- 25c:	ef 91       	pop	r30
- 25e:	9f 91       	pop	r25
- 260:	8f 91       	pop	r24
- 262:	0f 90       	pop	r0
- 264:	0f be       	out	0x3f, r0	; 63
- 266:	0f 90       	pop	r0
- 268:	1f 90       	pop	r1
- 26a:	18 95       	reti
+ 272:	ff 91       	pop	r31
+ 274:	ef 91       	pop	r30
+ 276:	9f 91       	pop	r25
+ 278:	8f 91       	pop	r24
+ 27a:	0f 90       	pop	r0
+ 27c:	0f be       	out	0x3f, r0	; 63
+ 27e:	0f 90       	pop	r0
+ 280:	1f 90       	pop	r1
+ 282:	18 95       	reti
 
-0000026c <uart_init>:
+00000284 <uart_init>:
 
-void uart_init(uint32_t baud){
- 26c:	9b 01       	movw	r18, r22
- 26e:	ac 01       	movw	r20, r24
+void uart_init(uint32_t baud) {
+ 284:	9b 01       	movw	r18, r22
+ 286:	ac 01       	movw	r20, r24
 	UBRR0 = (F_CPU / 16 / baud) - 1;
- 270:	60 e4       	ldi	r22, 0x40	; 64
- 272:	72 e4       	ldi	r23, 0x42	; 66
- 274:	8f e0       	ldi	r24, 0x0F	; 15
- 276:	90 e0       	ldi	r25, 0x00	; 0
- 278:	0e 94 97 01 	call	0x32e	; 0x32e <__udivmodsi4>
- 27c:	21 50       	subi	r18, 0x01	; 1
- 27e:	31 09       	sbc	r19, r1
- 280:	30 93 c5 00 	sts	0x00C5, r19	; 0x8000c5 <__TEXT_REGION_LENGTH__+0x7f80c5>
- 284:	20 93 c4 00 	sts	0x00C4, r18	; 0x8000c4 <__TEXT_REGION_LENGTH__+0x7f80c4>
+ 288:	60 e4       	ldi	r22, 0x40	; 64
+ 28a:	72 e4       	ldi	r23, 0x42	; 66
+ 28c:	8f e0       	ldi	r24, 0x0F	; 15
+ 28e:	90 e0       	ldi	r25, 0x00	; 0
+ 290:	0e 94 ac 01 	call	0x358	; 0x358 <__udivmodsi4>
+ 294:	21 50       	subi	r18, 0x01	; 1
+ 296:	31 09       	sbc	r19, r1
+ 298:	30 93 c5 00 	sts	0x00C5, r19	; 0x8000c5 <__TEXT_REGION_LENGTH__+0x7f80c5>
+ 29c:	20 93 c4 00 	sts	0x00C4, r18	; 0x8000c4 <__TEXT_REGION_LENGTH__+0x7f80c4>
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
- 288:	86 e0       	ldi	r24, 0x06	; 6
- 28a:	80 93 c2 00 	sts	0x00C2, r24	; 0x8000c2 <__TEXT_REGION_LENGTH__+0x7f80c2>
+ 2a0:	86 e0       	ldi	r24, 0x06	; 6
+ 2a2:	80 93 c2 00 	sts	0x00C2, r24	; 0x8000c2 <__TEXT_REGION_LENGTH__+0x7f80c2>
 	UCSR0B = (1 << RXEN0) | (1 << TXEN0);
- 28e:	e1 ec       	ldi	r30, 0xC1	; 193
- 290:	f0 e0       	ldi	r31, 0x00	; 0
- 292:	88 e1       	ldi	r24, 0x18	; 24
- 294:	80 83       	st	Z, r24
+ 2a6:	e1 ec       	ldi	r30, 0xC1	; 193
+ 2a8:	f0 e0       	ldi	r31, 0x00	; 0
+ 2aa:	88 e1       	ldi	r24, 0x18	; 24
+ 2ac:	80 83       	st	Z, r24
 	UCSR0B |= (1 << RXCIE0);
- 296:	80 81       	ld	r24, Z
- 298:	80 68       	ori	r24, 0x80	; 128
- 29a:	80 83       	st	Z, r24
- 29c:	08 95       	ret
+ 2ae:	80 81       	ld	r24, Z
+ 2b0:	80 68       	ori	r24, 0x80	; 128
+ 2b2:	80 83       	st	Z, r24
+	
+	// RS-485 핀 초기화
+	RS485_DDR |= (1 << RS485_DE_PIN) | (1 << RS485_RE_PIN);
+ 2b4:	8a b1       	in	r24, 0x0a	; 10
+ 2b6:	8c 60       	ori	r24, 0x0C	; 12
+ 2b8:	8a b9       	out	0x0a, r24	; 10
+	
+	// 기본 상태: 수신 모드 (DE=LOW, ~RE=LOW)
+	RS485_PORT &= ~((1 << RS485_DE_PIN) | (1 << RS485_RE_PIN));
+ 2ba:	8b b1       	in	r24, 0x0b	; 11
+ 2bc:	83 7f       	andi	r24, 0xF3	; 243
+ 2be:	8b b9       	out	0x0b, r24	; 11
+ 2c0:	08 95       	ret
 
-0000029e <uart_tx>:
+000002c2 <uart_tx>:
 }
 
-void uart_tx(uint8_t data){
+void uart_tx(uint8_t data) {
+	// 송신 시작 전, 송신 모드 활성화 (DE=HIGH, ~RE=HIGH)
+	RS485_PORT |= (1 << RS485_DE_PIN) | (1 << RS485_RE_PIN);
+ 2c2:	9b b1       	in	r25, 0x0b	; 11
+ 2c4:	9c 60       	ori	r25, 0x0C	; 12
+ 2c6:	9b b9       	out	0x0b, r25	; 11
+	
 	uint8_t next_head = (tx_head + 1) % USART_TX_BUFFER_SIZE;
- 29e:	20 91 0c 01 	lds	r18, 0x010C	; 0x80010c <tx_head>
- 2a2:	30 e0       	ldi	r19, 0x00	; 0
- 2a4:	2f 5f       	subi	r18, 0xFF	; 255
- 2a6:	3f 4f       	sbci	r19, 0xFF	; 255
- 2a8:	2f 73       	andi	r18, 0x3F	; 63
- 2aa:	30 78       	andi	r19, 0x80	; 128
- 2ac:	33 23       	and	r19, r19
- 2ae:	34 f4       	brge	.+12     	; 0x2bc <uart_tx+0x1e>
- 2b0:	21 50       	subi	r18, 0x01	; 1
- 2b2:	31 09       	sbc	r19, r1
- 2b4:	20 6c       	ori	r18, 0xC0	; 192
- 2b6:	3f 6f       	ori	r19, 0xFF	; 255
- 2b8:	2f 5f       	subi	r18, 0xFF	; 255
- 2ba:	3f 4f       	sbci	r19, 0xFF	; 255
+ 2c8:	20 91 0c 01 	lds	r18, 0x010C	; 0x80010c <tx_head>
+ 2cc:	30 e0       	ldi	r19, 0x00	; 0
+ 2ce:	2f 5f       	subi	r18, 0xFF	; 255
+ 2d0:	3f 4f       	sbci	r19, 0xFF	; 255
+ 2d2:	2f 73       	andi	r18, 0x3F	; 63
+ 2d4:	30 78       	andi	r19, 0x80	; 128
+ 2d6:	33 23       	and	r19, r19
+ 2d8:	34 f4       	brge	.+12     	; 0x2e6 <uart_tx+0x24>
+ 2da:	21 50       	subi	r18, 0x01	; 1
+ 2dc:	31 09       	sbc	r19, r1
+ 2de:	20 6c       	ori	r18, 0xC0	; 192
+ 2e0:	3f 6f       	ori	r19, 0xFF	; 255
+ 2e2:	2f 5f       	subi	r18, 0xFF	; 255
+ 2e4:	3f 4f       	sbci	r19, 0xFF	; 255
 
-	while (next_head == tx_tail){ }
- 2bc:	90 91 0b 01 	lds	r25, 0x010B	; 0x80010b <tx_tail>
- 2c0:	29 17       	cp	r18, r25
- 2c2:	e1 f3       	breq	.-8      	; 0x2bc <uart_tx+0x1e>
+	while (next_head == tx_tail) { }
+ 2e6:	90 91 0b 01 	lds	r25, 0x010B	; 0x80010b <tx_tail>
+ 2ea:	29 17       	cp	r18, r25
+ 2ec:	e1 f3       	breq	.-8      	; 0x2e6 <uart_tx+0x24>
 
 	tx_buffer[tx_head] = data;
- 2c4:	e0 91 0c 01 	lds	r30, 0x010C	; 0x80010c <tx_head>
- 2c8:	f0 e0       	ldi	r31, 0x00	; 0
- 2ca:	e3 5b       	subi	r30, 0xB3	; 179
- 2cc:	fe 4f       	sbci	r31, 0xFE	; 254
- 2ce:	80 83       	st	Z, r24
+ 2ee:	e0 91 0c 01 	lds	r30, 0x010C	; 0x80010c <tx_head>
+ 2f2:	f0 e0       	ldi	r31, 0x00	; 0
+ 2f4:	e3 5b       	subi	r30, 0xB3	; 179
+ 2f6:	fe 4f       	sbci	r31, 0xFE	; 254
+ 2f8:	80 83       	st	Z, r24
 	tx_head = next_head;
- 2d0:	20 93 0c 01 	sts	0x010C, r18	; 0x80010c <tx_head>
+ 2fa:	20 93 0c 01 	sts	0x010C, r18	; 0x80010c <tx_head>
 	UCSR0B |= (1 << UDRIE0);
- 2d4:	e1 ec       	ldi	r30, 0xC1	; 193
- 2d6:	f0 e0       	ldi	r31, 0x00	; 0
- 2d8:	80 81       	ld	r24, Z
- 2da:	80 62       	ori	r24, 0x20	; 32
- 2dc:	80 83       	st	Z, r24
- 2de:	08 95       	ret
+ 2fe:	e1 ec       	ldi	r30, 0xC1	; 193
+ 300:	f0 e0       	ldi	r31, 0x00	; 0
+ 302:	80 81       	ld	r24, Z
+ 304:	80 62       	ori	r24, 0x20	; 32
+ 306:	80 83       	st	Z, r24
+ 308:	08 95       	ret
 
-000002e0 <uart_rx>:
+0000030a <uart_rx>:
 }
 
-uint8_t uart_rx(){
-	while(rx_head == rx_tail){ }
- 2e0:	90 91 0a 01 	lds	r25, 0x010A	; 0x80010a <rx_head>
- 2e4:	80 91 09 01 	lds	r24, 0x0109	; 0x800109 <rx_tail>
- 2e8:	98 17       	cp	r25, r24
- 2ea:	d1 f3       	breq	.-12     	; 0x2e0 <uart_rx>
+uint8_t uart_rx() {
+	while (rx_head == rx_tail) { }
+ 30a:	90 91 0a 01 	lds	r25, 0x010A	; 0x80010a <rx_head>
+ 30e:	80 91 09 01 	lds	r24, 0x0109	; 0x800109 <rx_tail>
+ 312:	98 17       	cp	r25, r24
+ 314:	d1 f3       	breq	.-12     	; 0x30a <uart_rx>
 	uint8_t data = rx_buffer[rx_tail];
- 2ec:	e0 91 09 01 	lds	r30, 0x0109	; 0x800109 <rx_tail>
- 2f0:	f0 e0       	ldi	r31, 0x00	; 0
- 2f2:	e3 5f       	subi	r30, 0xF3	; 243
- 2f4:	fe 4f       	sbci	r31, 0xFE	; 254
- 2f6:	80 81       	ld	r24, Z
+ 316:	e0 91 09 01 	lds	r30, 0x0109	; 0x800109 <rx_tail>
+ 31a:	f0 e0       	ldi	r31, 0x00	; 0
+ 31c:	e3 5f       	subi	r30, 0xF3	; 243
+ 31e:	fe 4f       	sbci	r31, 0xFE	; 254
+ 320:	80 81       	ld	r24, Z
 	rx_tail = (rx_tail + 1) % USART_RX_BUFFER_SIZE;
- 2f8:	20 91 09 01 	lds	r18, 0x0109	; 0x800109 <rx_tail>
- 2fc:	30 e0       	ldi	r19, 0x00	; 0
- 2fe:	2f 5f       	subi	r18, 0xFF	; 255
- 300:	3f 4f       	sbci	r19, 0xFF	; 255
- 302:	2f 73       	andi	r18, 0x3F	; 63
- 304:	30 78       	andi	r19, 0x80	; 128
- 306:	33 23       	and	r19, r19
- 308:	34 f4       	brge	.+12     	; 0x316 <uart_rx+0x36>
- 30a:	21 50       	subi	r18, 0x01	; 1
- 30c:	31 09       	sbc	r19, r1
- 30e:	20 6c       	ori	r18, 0xC0	; 192
- 310:	3f 6f       	ori	r19, 0xFF	; 255
- 312:	2f 5f       	subi	r18, 0xFF	; 255
- 314:	3f 4f       	sbci	r19, 0xFF	; 255
- 316:	20 93 09 01 	sts	0x0109, r18	; 0x800109 <rx_tail>
+ 322:	20 91 09 01 	lds	r18, 0x0109	; 0x800109 <rx_tail>
+ 326:	30 e0       	ldi	r19, 0x00	; 0
+ 328:	2f 5f       	subi	r18, 0xFF	; 255
+ 32a:	3f 4f       	sbci	r19, 0xFF	; 255
+ 32c:	2f 73       	andi	r18, 0x3F	; 63
+ 32e:	30 78       	andi	r19, 0x80	; 128
+ 330:	33 23       	and	r19, r19
+ 332:	34 f4       	brge	.+12     	; 0x340 <uart_rx+0x36>
+ 334:	21 50       	subi	r18, 0x01	; 1
+ 336:	31 09       	sbc	r19, r1
+ 338:	20 6c       	ori	r18, 0xC0	; 192
+ 33a:	3f 6f       	ori	r19, 0xFF	; 255
+ 33c:	2f 5f       	subi	r18, 0xFF	; 255
+ 33e:	3f 4f       	sbci	r19, 0xFF	; 255
+ 340:	20 93 09 01 	sts	0x0109, r18	; 0x800109 <rx_tail>
 	return data;
 }
- 31a:	08 95       	ret
+ 344:	08 95       	ret
 
-0000031c <uart_is_available>:
+00000346 <uart_is_available>:
 
-uint8_t uart_is_available(){
+uint8_t uart_is_available() {
 	return (rx_head != rx_tail);
- 31c:	20 91 0a 01 	lds	r18, 0x010A	; 0x80010a <rx_head>
- 320:	90 91 09 01 	lds	r25, 0x0109	; 0x800109 <rx_tail>
- 324:	81 e0       	ldi	r24, 0x01	; 1
- 326:	29 13       	cpse	r18, r25
- 328:	01 c0       	rjmp	.+2      	; 0x32c <uart_is_available+0x10>
- 32a:	80 e0       	ldi	r24, 0x00	; 0
+ 346:	20 91 0a 01 	lds	r18, 0x010A	; 0x80010a <rx_head>
+ 34a:	90 91 09 01 	lds	r25, 0x0109	; 0x800109 <rx_tail>
+ 34e:	81 e0       	ldi	r24, 0x01	; 1
+ 350:	29 13       	cpse	r18, r25
+ 352:	01 c0       	rjmp	.+2      	; 0x356 <uart_is_available+0x10>
+ 354:	80 e0       	ldi	r24, 0x00	; 0
 }
- 32c:	08 95       	ret
+ 356:	08 95       	ret
 
-0000032e <__udivmodsi4>:
- 32e:	a1 e2       	ldi	r26, 0x21	; 33
- 330:	1a 2e       	mov	r1, r26
- 332:	aa 1b       	sub	r26, r26
- 334:	bb 1b       	sub	r27, r27
- 336:	fd 01       	movw	r30, r26
- 338:	0d c0       	rjmp	.+26     	; 0x354 <__udivmodsi4_ep>
+00000358 <__udivmodsi4>:
+ 358:	a1 e2       	ldi	r26, 0x21	; 33
+ 35a:	1a 2e       	mov	r1, r26
+ 35c:	aa 1b       	sub	r26, r26
+ 35e:	bb 1b       	sub	r27, r27
+ 360:	fd 01       	movw	r30, r26
+ 362:	0d c0       	rjmp	.+26     	; 0x37e <__udivmodsi4_ep>
 
-0000033a <__udivmodsi4_loop>:
- 33a:	aa 1f       	adc	r26, r26
- 33c:	bb 1f       	adc	r27, r27
- 33e:	ee 1f       	adc	r30, r30
- 340:	ff 1f       	adc	r31, r31
- 342:	a2 17       	cp	r26, r18
- 344:	b3 07       	cpc	r27, r19
- 346:	e4 07       	cpc	r30, r20
- 348:	f5 07       	cpc	r31, r21
- 34a:	20 f0       	brcs	.+8      	; 0x354 <__udivmodsi4_ep>
- 34c:	a2 1b       	sub	r26, r18
- 34e:	b3 0b       	sbc	r27, r19
- 350:	e4 0b       	sbc	r30, r20
- 352:	f5 0b       	sbc	r31, r21
+00000364 <__udivmodsi4_loop>:
+ 364:	aa 1f       	adc	r26, r26
+ 366:	bb 1f       	adc	r27, r27
+ 368:	ee 1f       	adc	r30, r30
+ 36a:	ff 1f       	adc	r31, r31
+ 36c:	a2 17       	cp	r26, r18
+ 36e:	b3 07       	cpc	r27, r19
+ 370:	e4 07       	cpc	r30, r20
+ 372:	f5 07       	cpc	r31, r21
+ 374:	20 f0       	brcs	.+8      	; 0x37e <__udivmodsi4_ep>
+ 376:	a2 1b       	sub	r26, r18
+ 378:	b3 0b       	sbc	r27, r19
+ 37a:	e4 0b       	sbc	r30, r20
+ 37c:	f5 0b       	sbc	r31, r21
 
-00000354 <__udivmodsi4_ep>:
- 354:	66 1f       	adc	r22, r22
- 356:	77 1f       	adc	r23, r23
- 358:	88 1f       	adc	r24, r24
- 35a:	99 1f       	adc	r25, r25
- 35c:	1a 94       	dec	r1
- 35e:	69 f7       	brne	.-38     	; 0x33a <__udivmodsi4_loop>
- 360:	60 95       	com	r22
- 362:	70 95       	com	r23
- 364:	80 95       	com	r24
- 366:	90 95       	com	r25
- 368:	9b 01       	movw	r18, r22
- 36a:	ac 01       	movw	r20, r24
- 36c:	bd 01       	movw	r22, r26
- 36e:	cf 01       	movw	r24, r30
- 370:	08 95       	ret
+0000037e <__udivmodsi4_ep>:
+ 37e:	66 1f       	adc	r22, r22
+ 380:	77 1f       	adc	r23, r23
+ 382:	88 1f       	adc	r24, r24
+ 384:	99 1f       	adc	r25, r25
+ 386:	1a 94       	dec	r1
+ 388:	69 f7       	brne	.-38     	; 0x364 <__udivmodsi4_loop>
+ 38a:	60 95       	com	r22
+ 38c:	70 95       	com	r23
+ 38e:	80 95       	com	r24
+ 390:	90 95       	com	r25
+ 392:	9b 01       	movw	r18, r22
+ 394:	ac 01       	movw	r20, r24
+ 396:	bd 01       	movw	r22, r26
+ 398:	cf 01       	movw	r24, r30
+ 39a:	08 95       	ret
 
-00000372 <_exit>:
- 372:	f8 94       	cli
+0000039c <_exit>:
+ 39c:	f8 94       	cli
 
-00000374 <__stop_program>:
- 374:	ff cf       	rjmp	.-2      	; 0x374 <__stop_program>
+0000039e <__stop_program>:
+ 39e:	ff cf       	rjmp	.-2      	; 0x39e <__stop_program>
