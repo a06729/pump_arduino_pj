@@ -1,0 +1,21 @@
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.exe.config
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.exe
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.pdb
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.csprojAssemblyReference.cache
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.csproj.CoreCompileInputs.cache
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.exe
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.pdb
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\AVR-to-PC-Comm\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.exe.config
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\AVR-to-PC-Comm\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.exe
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\AVR-to-PC-Comm\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.pdb
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\AVR-to-PC-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.csprojAssemblyReference.cache
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\AVR-to-PC-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.csproj.CoreCompileInputs.cache
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\AVR-to-PC-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.exe
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\AVR-to-PC-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.pdb
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.exe.config
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.exe
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\bin\Debug\USB2RS485_PC_Receive.pdb
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.csprojAssemblyReference.cache
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.csproj.CoreCompileInputs.cache
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.exe
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\obj\Debug\USB2RS485_PC_Receive.pdb

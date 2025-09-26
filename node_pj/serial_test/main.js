@@ -14,7 +14,6 @@ const port = new SerialPort({
     autoOpen: false
 });
 
-
 const delimiter = Buffer.from('\r', 'utf8');
 const parser = port.pipe(new DelimiterParser({ delimiter: delimiter }));
 
@@ -24,10 +23,10 @@ parser.on('data', (data) => {
     console.log('길이:', data.length, '바이트');
     
     // HEX 출력
-    console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g).join(' '));
+    //console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g).join(' '));
     
     // 바이너리 출력  
-    console.log('BIN: ', Array.from(data).map(b => b.toString(2).padStart(8, '0')).join(' '));
+    //console.log('BIN: ', Array.from(data).map(b => b.toString(2).padStart(8, '0')).join(' '));
     
     // ASCII 출력 (제어 문자 표시)
     let asciiStr = '';

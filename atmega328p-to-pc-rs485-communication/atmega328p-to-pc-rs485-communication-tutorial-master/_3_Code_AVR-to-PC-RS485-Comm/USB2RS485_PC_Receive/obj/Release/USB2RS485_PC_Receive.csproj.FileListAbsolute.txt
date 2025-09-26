@@ -1,0 +1,6 @@
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\bin\Release\USB2RS485_PC_Receive.exe.config
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\bin\Release\USB2RS485_PC_Receive.exe
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\bin\Release\USB2RS485_PC_Receive.pdb
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\obj\Release\USB2RS485_PC_Receive.csproj.CoreCompileInputs.cache
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\obj\Release\USB2RS485_PC_Receive.exe
+E:\ATmega328p-to-PC-RS485-communication\_3_Code_AVR-to-PC-RS485-Comm\USB2RS485_PC_Receive\obj\Release\USB2RS485_PC_Receive.pdb

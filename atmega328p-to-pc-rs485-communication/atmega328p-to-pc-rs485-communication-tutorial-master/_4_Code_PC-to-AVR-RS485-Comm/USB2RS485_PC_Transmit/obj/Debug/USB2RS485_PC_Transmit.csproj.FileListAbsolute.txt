@@ -1,0 +1,7 @@
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\PC-to-AVR-Comm\USB2RS485_PC_Transmit\bin\Debug\USB2RS485_PC_Transmit.exe.config
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\PC-to-AVR-Comm\USB2RS485_PC_Transmit\bin\Debug\USB2RS485_PC_Transmit.exe
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\PC-to-AVR-Comm\USB2RS485_PC_Transmit\bin\Debug\USB2RS485_PC_Transmit.pdb
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\PC-to-AVR-Comm\USB2RS485_PC_Transmit\obj\Debug\USB2RS485_PC_Transmit.csprojAssemblyReference.cache
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\PC-to-AVR-Comm\USB2RS485_PC_Transmit\obj\Debug\USB2RS485_PC_Transmit.csproj.CoreCompileInputs.cache
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\PC-to-AVR-Comm\USB2RS485_PC_Transmit\obj\Debug\USB2RS485_PC_Transmit.exe
+E:\_1_Personal\MY PROJECTS\ATmega328p_Tutorials\_5_ATmega328p_RS485_Transmission_Tutorial\Code\PC-to-AVR-Comm\USB2RS485_PC_Transmit\obj\Debug\USB2RS485_PC_Transmit.pdb

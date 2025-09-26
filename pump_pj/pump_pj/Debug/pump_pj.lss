@@ -283,7 +283,6 @@ ISR(USART_UDRE_vect) {
  226:	80 81       	ld	r24, Z
  228:	8f 7d       	andi	r24, 0xDF	; 223
  22a:	80 83       	st	Z, r24
-		
 		// 전송 완료 대기 및 수신 모드 전환
 		loop_until_bit_is_set(UCSR0A, TXC0);
  22c:	80 91 c0 00 	lds	r24, 0x00C0	; 0x8000c0 <__TEXT_REGION_LENGTH__+0x7f80c0>
