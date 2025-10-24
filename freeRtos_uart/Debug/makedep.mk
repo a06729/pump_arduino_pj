@@ -20,5 +20,7 @@ FreeRTOS\timers.c
 
 main.c
 
+modbus.c
+
 uart.c
 

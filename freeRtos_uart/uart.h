@@ -3,7 +3,7 @@
 #define UBRR_VALUE (F_CPU / 16 / BAUD - 1)
 
 
-#define USART_TX_BUFFER_SIZE 64
+#define USART_TX_BUFFER_SIZE 256
 #define USART_RX_BUFFER_SIZE 64
 
 
@@ -24,4 +24,11 @@ void uart_init(uint32_t baud);
 void uart_initial_print(const char *s); // 스케줄러 시작 전용 폴링 출력
 void uart_task_print(const char *s); // Task 내부 인터럽트 출력
 
+extern volatile uint8_t rx_buffer[USART_RX_BUFFER_SIZE];
+extern volatile uint8_t rx_head;
+extern volatile uint8_t rx_tail;
 
+
+extern volatile uint8_t tx_buffer[USART_TX_BUFFER_SIZE];
+extern volatile uint8_t tx_head;
+extern volatile uint8_t tx_tail;
