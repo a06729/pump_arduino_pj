@@ -15,19 +15,19 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   5 .debug_aranges 00000388  00000000  00000000  000017b8  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00004043  00000000  00000000  00001b40  2**0
+  6 .debug_info   0000404d  00000000  00000000  00001b40  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 000010e6  00000000  00000000  00005b83  2**0
+  7 .debug_abbrev 000010e6  00000000  00000000  00005b8d  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   00002493  00000000  00000000  00006c69  2**0
+  8 .debug_line   00002493  00000000  00000000  00006c73  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000b10  00000000  00000000  000090fc  2**2
+  9 .debug_frame  00000b10  00000000  00000000  00009108  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000013cb  00000000  00000000  00009c0c  2**0
+ 10 .debug_str    000013cb  00000000  00000000  00009c18  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00003b27  00000000  00000000  0000afd7  2**0
+ 11 .debug_loc    00003b27  00000000  00000000  0000afe3  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 000003b8  00000000  00000000  0000eafe  2**0
+ 12 .debug_ranges 000003b8  00000000  00000000  0000eb0a  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -2839,7 +2839,8 @@ static void process_packet(uint8_t *buffer, uint8_t length) {
     if (cmd == 'W') {
     1378:	07 35       	cpi	r16, 0x57	; 87
     137a:	29 f4       	brne	.+10     	; 0x1386 <process_packet+0x2c>
-        if (length != 7) return; // 'W' 명령은 7바이트여야 함 
+        
+		if (length != 7) return; // 'W' 명령은 7바이트여야 함 
     137c:	67 30       	cpi	r22, 0x07	; 7
     137e:	b1 f5       	brne	.+108    	; 0x13ec <process_packet+0x92>
         received_checksum = buffer[FRAME_IDX_W_CHECKSUM];
@@ -2847,10 +2848,12 @@ static void process_packet(uint8_t *buffer, uint8_t length) {
         data_len_for_checksum = 4; // ID, Cmd, Addr, Data
     1382:	64 e0       	ldi	r22, 0x04	; 4
     1384:	0b c0       	rjmp	.+22     	; 0x139c <process_packet+0x42>
+		
     } else if (cmd == 'R') {
     1386:	02 35       	cpi	r16, 0x52	; 82
     1388:	89 f5       	brne	.+98     	; 0x13ec <process_packet+0x92>
-        if (length != 6) return; // 'R' 명령은 6바이트여야 함  (Data 필드 없음)
+        
+		if (length != 6) return; // 'R' 명령은 6바이트여야 함  (Data 필드 없음)
     138a:	66 30       	cpi	r22, 0x06	; 6
     138c:	79 f5       	brne	.+94     	; 0x13ec <process_packet+0x92>
         received_checksum = buffer[length - 2]; // Checksum은 \n 바로 앞
@@ -2860,9 +2863,10 @@ static void process_packet(uint8_t *buffer, uint8_t length) {
     1394:	e8 0f       	add	r30, r24
     1396:	f9 1f       	adc	r31, r25
     1398:	e0 80       	ld	r14, Z
-        data_len_for_checksum = 3; // ID, Cmd, Addr
+		data_len_for_checksum = 3; // ID, Cmd, Addr
     139a:	63 e0       	ldi	r22, 0x03	; 3
     139c:	ec 01       	movw	r28, r24
+		
     } else {
         return; // 알 수 없는 명령
     }
@@ -2875,66 +2879,68 @@ static void process_packet(uint8_t *buffer, uint8_t length) {
     13a4:	e8 12       	cpse	r14, r24
     13a6:	22 c0       	rjmp	.+68     	; 0x13ec <process_packet+0x92>
         return; // 체크섬 오류
-    }
-
-    // 4. 유효성 검사 통과 -> 명령 처리
-    uint8_t data;
-    if (cmd == 'W') {
+    }else{
+		// 4. 유효성 검사 통과 -> 명령 처리
+		uint8_t data;
+		if (cmd == 'W') {
     13a8:	07 35       	cpi	r16, 0x57	; 87
     13aa:	79 f4       	brne	.+30     	; 0x13ca <process_packet+0x70>
-        data = buffer[FRAME_IDX_W_DATA];
+			data = buffer[FRAME_IDX_W_DATA];
     13ac:	2c 81       	ldd	r18, Y+4	; 0x04
-        if (addr < 16) { // 가상 레지스터 범위 확인
+			if (addr < 16) { // 가상 레지스터 범위 확인
     13ae:	ff e0       	ldi	r31, 0x0F	; 15
     13b0:	ff 15       	cp	r31, r15
     13b2:	28 f0       	brcs	.+10     	; 0x13be <process_packet+0x64>
-            g_device_registers[addr] = data;
+				g_device_registers[addr] = data;
     13b4:	ef 2d       	mov	r30, r15
     13b6:	f0 e0       	ldi	r31, 0x00	; 0
     13b8:	e0 56       	subi	r30, 0x60	; 96
     13ba:	fb 4f       	sbci	r31, 0xFB	; 251
     13bc:	20 83       	st	Z, r18
-        }
-        // 'W' 명령에 대한 응답 
-        send_response(slave_id, cmd, addr, data); 
+			}
+			// 'W' 명령에 대한 응답
+			send_response(slave_id, cmd, addr, data);
     13be:	4f 2d       	mov	r20, r15
     13c0:	60 2f       	mov	r22, r16
     13c2:	81 2f       	mov	r24, r17
     13c4:	0e 94 7c 09 	call	0x12f8	; 0x12f8 <send_response>
     13c8:	11 c0       	rjmp	.+34     	; 0x13ec <process_packet+0x92>
-        
-    } else if (cmd == 'R') {
+			    
+			} else if (cmd == 'R') {
     13ca:	02 35       	cpi	r16, 0x52	; 82
     13cc:	79 f4       	brne	.+30     	; 0x13ec <process_packet+0x92>
-        data = 0;
-        if (addr < 16) { // 가상 레지스터 범위 확인
+				data = 0;
+				if (addr < 16) { // 가상 레지스터 범위 확인
     13ce:	8f e0       	ldi	r24, 0x0F	; 15
     13d0:	8f 15       	cp	r24, r15
     13d2:	30 f0       	brcs	.+12     	; 0x13e0 <process_packet+0x86>
-            data = g_device_registers[addr];
+					data = g_device_registers[addr];
     13d4:	ef 2d       	mov	r30, r15
     13d6:	f0 e0       	ldi	r31, 0x00	; 0
     13d8:	e0 56       	subi	r30, 0x60	; 96
     13da:	fb 4f       	sbci	r31, 0xFB	; 251
     13dc:	20 81       	ld	r18, Z
     13de:	01 c0       	rjmp	.+2      	; 0x13e2 <process_packet+0x88>
-        }
-        // 'W' 명령에 대한 응답 
-        send_response(slave_id, cmd, addr, data); 
-        
-    } else if (cmd == 'R') {
-        data = 0;
+			}
+			// 'W' 명령에 대한 응답
+			send_response(slave_id, cmd, addr, data);
+			    
+			} else if (cmd == 'R') {
+				data = 0;
     13e0:	20 e0       	ldi	r18, 0x00	; 0
-        if (addr < 16) { // 가상 레지스터 범위 확인
-            data = g_device_registers[addr];
-        }
-        // 'R' 명령에 대한 응답 
-        send_response(slave_id, cmd, addr, data);
+				if (addr < 16) { // 가상 레지스터 범위 확인
+					data = g_device_registers[addr];
+				}
+				// 'R' 명령에 대한 응답
+				send_response(slave_id, cmd, addr, data);
     13e2:	4f 2d       	mov	r20, r15
     13e4:	60 2f       	mov	r22, r16
     13e6:	81 2f       	mov	r24, r17
     13e8:	0e 94 7c 09 	call	0x12f8	; 0x12f8 <send_response>
-    }
+		}
+	}
+
+
 }
     13ec:	df 91       	pop	r29
     13ee:	cf 91       	pop	r28

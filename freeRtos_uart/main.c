@@ -24,7 +24,7 @@
 #define FRAME_IDX_W_END         6
 
 #define FRAME_IDX_R_DATA        4 // 읽기 응답(R)일 경우 데이터 위치
-#define FRAME_IDX_R_CHECKSUM    5
+#define FRAME_IDX_R_CHECKSUM    4
 #define FRAME_IDX_R_END         6
 // ---------------------
 
@@ -33,8 +33,6 @@
 //0x24   0x01  0x57  0x05  0xAA     0x07     0x0A
 // $   SlaveId  R    주소  checkSum값  \n
 //0x24  0x01   0x52  0x05  0x58      0x0A
-
-
 
 // Task 간 통신을 위한 큐 핸들
 static QueueHandle_t xUartQueue = NULL;
@@ -129,13 +127,17 @@ static void process_packet(uint8_t *buffer, uint8_t length) {
     uint8_t data_len_for_checksum;
 
     if (cmd == 'W') {
-        if (length != 7) return; // 'W' 명령은 7바이트여야 함 
+        
+		if (length != 7) return; // 'W' 명령은 7바이트여야 함 
         received_checksum = buffer[FRAME_IDX_W_CHECKSUM];
         data_len_for_checksum = 4; // ID, Cmd, Addr, Data
+		
     } else if (cmd == 'R') {
-        if (length != 6) return; // 'R' 명령은 6바이트여야 함  (Data 필드 없음)
+        
+		if (length != 6) return; // 'R' 명령은 6바이트여야 함  (Data 필드 없음)
         received_checksum = buffer[length - 2]; // Checksum은 \n 바로 앞
-        data_len_for_checksum = 3; // ID, Cmd, Addr
+		data_len_for_checksum = 3; // ID, Cmd, Addr
+		
     } else {
         return; // 알 수 없는 명령
     }
@@ -144,26 +146,28 @@ static void process_packet(uint8_t *buffer, uint8_t length) {
 
     if (received_checksum != calculated_checksum) {
         return; // 체크섬 오류
-    }
+    }else{
+		// 4. 유효성 검사 통과 -> 명령 처리
+		uint8_t data;
+		if (cmd == 'W') {
+			data = buffer[FRAME_IDX_W_DATA];
+			if (addr < 16) { // 가상 레지스터 범위 확인
+				g_device_registers[addr] = data;
+			}
+			// 'W' 명령에 대한 응답
+			send_response(slave_id, cmd, addr, data);
+			    
+			} else if (cmd == 'R') {
+				data = 0;
+				if (addr < 16) { // 가상 레지스터 범위 확인
+					data = g_device_registers[addr];
+				}
+				// 'R' 명령에 대한 응답
+				send_response(slave_id, cmd, addr, data);
+		}
+	}
 
-    // 4. 유효성 검사 통과 -> 명령 처리
-    uint8_t data;
-    if (cmd == 'W') {
-        data = buffer[FRAME_IDX_W_DATA];
-        if (addr < 16) { // 가상 레지스터 범위 확인
-            g_device_registers[addr] = data;
-        }
-        // 'W' 명령에 대한 응답 
-        send_response(slave_id, cmd, addr, data); 
-        
-    } else if (cmd == 'R') {
-        data = 0;
-        if (addr < 16) { // 가상 레지스터 범위 확인
-            data = g_device_registers[addr];
-        }
-        // 'R' 명령에 대한 응답 
-        send_response(slave_id, cmd, addr, data);
-    }
+
 }
 
 /**

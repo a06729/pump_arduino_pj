@@ -826,7 +826,7 @@ END GROUP
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000     0x4043
+.debug_info     0x00000000     0x404d
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0x5f4 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_info    0x000005f4      0x1a4 FreeRTOS/heap_1.o
@@ -834,8 +834,8 @@ END GROUP
  .debug_info    0x00000a65      0x24b FreeRTOS/port.o
  .debug_info    0x00000cb0     0x1049 FreeRTOS/queue.o
  .debug_info    0x00001cf9     0x1acb FreeRTOS/tasks.o
- .debug_info    0x000037c4      0x59d main.o
- .debug_info    0x00003d61      0x2e2 uart.o
+ .debug_info    0x000037c4      0x5a7 main.o
+ .debug_info    0x00003d6b      0x2e2 uart.o
 
 .debug_abbrev   0x00000000     0x10e6
  *(.debug_abbrev)
