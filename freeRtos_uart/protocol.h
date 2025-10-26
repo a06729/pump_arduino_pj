@@ -1,28 +1,33 @@
-﻿#ifndef PROTOCOL_H_
-#define PROTOCOL_H_
+﻿
+//write 명령
+// $   SlaveId  W    주소  쓰기값 checkSum값 \n(아스키코드값)
+//0x24   0x01  0x57  0x05  0xAA     0x07     0x0A
+// $   SlaveId  R    주소  checkSum값  \n
+//0x24  0x01   0x52  0x05  0x58      0x0A
 
-#include <stdint.h>
 
-// 프로토콜 설정
-#define PROTOCOL_MAX_FRAME_SIZE 13
-#define PROTOCOL_TIMEOUT_MS 100
+// --- 프로토콜 정의 ---
+#define MY_SLAVE_ID             0x01  // 이 장치의 Slave ID
+#define PROTOCOL_BUFFER_SIZE    16    // 수신 패킷 버퍼 크기 ('$'...'\n' 포함)
 
-// 데이터 구조체
-typedef struct {
-	uint8_t slave_id;
-	char command;    // 'W' or 'R'
-	uint8_t address;
-	uint8_t data;    // 데이터가 없는 경우 0
-} ProtocolData;
+// PDF 프레임 인덱스 정의 [cite: 29, 31]
+#define FRAME_IDX_START         0
+#define FRAME_IDX_ID            1
+#define FRAME_IDX_CMD           2
+#define FRAME_IDX_ADDR          3
+#define FRAME_IDX_W_DATA        4 // 쓰기 명령(W)일 경우 데이터 위치
+#define FRAME_IDX_W_CHECKSUM    5
+#define FRAME_IDX_W_END         6
 
-// 유틸리티 함수
-int8_t hex_char_to_val(char c);
-uint8_t hex_ascii_to_byte(const char* in);
-void byte_to_hex_ascii(uint8_t val, char* out);
-uint8_t calc_checksum_ascii(const char* ascii, uint8_t len);
+#define FRAME_IDX_R_DATA        4 // 읽기 응답(R)일 경우 데이터 위치
+#define FRAME_IDX_R_CHECKSUM    4
+#define FRAME_IDX_R_END         6
+// ---------------------
 
-// 프로토콜 프레임 생성/파싱
-void build_ascii_frame(const ProtocolData* data, char* out_buf, uint8_t is_resp);
-uint8_t parse_ascii_frame(const char* buf, ProtocolData* out_data);
 
-#endif // PROTOCOL_H_
+uint8_t calculate_checksum(uint8_t *buffer, uint8_t length);
+
+void send_response(uint8_t slave_id, uint8_t cmd, uint8_t addr, uint8_t data);
+
+
+ void process_packet(uint8_t *buffer, uint8_t length);

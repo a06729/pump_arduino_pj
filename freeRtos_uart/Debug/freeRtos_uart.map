@@ -14,8 +14,6 @@ Common symbol       size              file
 
 rx_buffer           0x40              uart.o
 tx_buffer           0x100             uart.o
-g_holding_registers
-                    0x20              modbus.o
 
 Discarded input sections
 
@@ -160,36 +158,9 @@ Discarded input sections
  .text          0x00000000        0x0 main.o
  .data          0x00000000        0x0 main.o
  .bss           0x00000000        0x0 main.o
- .text          0x00000000        0x0 modbus.o
- .data          0x00000000        0x0 modbus.o
- .bss           0x00000000        0x0 modbus.o
- .text.modbus_crc16
-                0x00000000       0x48 modbus.o
- .text.modbus_send_response
-                0x00000000       0x2c modbus.o
- .text.modbus_send_exception
-                0x00000000       0x42 modbus.o
- .text.modbus_process_frame
-                0x00000000      0x17a modbus.o
- .text.vModbusTask
-                0x00000000       0x5c modbus.o
- .text.modbus_init
-                0x00000000       0x18 modbus.o
- .bss.modbus_frame.2218
-                0x00000000       0x80 modbus.o
- .bss.frame_index.2219
-                0x00000000        0x1 modbus.o
- .debug_info    0x00000000      0x4f3 modbus.o
- .debug_abbrev  0x00000000      0x1c9 modbus.o
- .debug_loc     0x00000000      0x5cf modbus.o
- .debug_aranges
-                0x00000000       0x48 modbus.o
- .debug_ranges  0x00000000       0x68 modbus.o
- .debug_line    0x00000000      0x315 modbus.o
- .debug_str     0x00000000      0x30b modbus.o
- .comment       0x00000000       0x31 modbus.o
- .debug_frame   0x00000000       0xd8 modbus.o
- COMMON         0x00000000       0x20 modbus.o
+ .text          0x00000000        0x0 protocol.o
+ .data          0x00000000        0x0 protocol.o
+ .bss           0x00000000        0x0 protocol.o
  .text          0x00000000        0x0 uart.o
  .data          0x00000000        0x0 uart.o
  .bss           0x00000000        0x0 uart.o
@@ -276,7 +247,7 @@ LOAD FreeRTOS/queue.o
 LOAD FreeRTOS/tasks.o
 LOAD FreeRTOS/timers.o
 LOAD main.o
-LOAD modbus.o
+LOAD protocol.o
 LOAD uart.o
 START GROUP
 LOAD c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr5\libm.a
@@ -584,19 +555,22 @@ END GROUP
  .text.vTaskMissedYield
                 0x000012ac        0x8 FreeRTOS/tasks.o
                 0x000012ac                vTaskMissedYield
- .text.calculate_checksum
-                0x000012b4       0x1a main.o
- .text.vRxTask  0x000012ce       0x2a main.o
-                0x000012ce                vRxTask
- .text.send_response
-                0x000012f8       0x62 main.o
- .text.process_packet
-                0x0000135a       0xa0 main.o
+ .text.vRxTask  0x000012b4       0x2a main.o
+                0x000012b4                vRxTask
  .text.vProtocolTask
-                0x000013fa       0x80 main.o
-                0x000013fa                vProtocolTask
- .text.main     0x0000147a       0x58 main.o
-                0x0000147a                main
+                0x000012de       0x80 main.o
+                0x000012de                vProtocolTask
+ .text.main     0x0000135e       0x58 main.o
+                0x0000135e                main
+ .text.calculate_checksum
+                0x000013b6       0x1a protocol.o
+                0x000013b6                calculate_checksum
+ .text.send_response
+                0x000013d0       0x62 protocol.o
+                0x000013d0                send_response
+ .text.process_packet
+                0x00001432       0xa0 protocol.o
+                0x00001432                process_packet
  .text.__vector_18
                 0x000014d2       0x60 uart.o
                 0x000014d2                __vector_18
@@ -711,10 +685,11 @@ END GROUP
  .bss.pxCurrentTCB
                 0x0080049e        0x2 FreeRTOS/tasks.o
                 0x0080049e                pxCurrentTCB
- .bss.g_device_registers
-                0x008004a0       0x10 main.o
  .bss.xUartQueue
-                0x008004b0        0x2 main.o
+                0x008004a0        0x2 main.o
+ .bss.g_device_registers
+                0x008004a2       0x10 protocol.o
+                0x008004a2                g_device_registers
  .bss.rx_tail   0x008004b2        0x1 uart.o
                 0x008004b2                rx_tail
  .bss.rx_head   0x008004b3        0x1 uart.o
@@ -784,6 +759,7 @@ END GROUP
  .comment       0x00000030       0x31 FreeRTOS/queue.o
  .comment       0x00000030       0x31 FreeRTOS/tasks.o
  .comment       0x00000030       0x31 main.o
+ .comment       0x00000030       0x31 protocol.o
  .comment       0x00000030       0x31 uart.o
 
 .note.gnu.avr.deviceinfo
@@ -806,7 +782,7 @@ END GROUP
 .debug_sfnames
  *(.debug_sfnames)
 
-.debug_aranges  0x00000000      0x388
+.debug_aranges  0x00000000      0x3a0
  *(.debug_aranges)
  .debug_aranges
                 0x00000000       0x38 FreeRTOS/heap_1.o
@@ -819,14 +795,16 @@ END GROUP
  .debug_aranges
                 0x00000180      0x160 FreeRTOS/tasks.o
  .debug_aranges
-                0x000002e0       0x48 main.o
+                0x000002e0       0x30 main.o
  .debug_aranges
-                0x00000328       0x60 uart.o
+                0x00000310       0x30 protocol.o
+ .debug_aranges
+                0x00000340       0x60 uart.o
 
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000     0x404d
+.debug_info     0x00000000     0x40e2
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0x5f4 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_info    0x000005f4      0x1a4 FreeRTOS/heap_1.o
@@ -834,10 +812,11 @@ END GROUP
  .debug_info    0x00000a65      0x24b FreeRTOS/port.o
  .debug_info    0x00000cb0     0x1049 FreeRTOS/queue.o
  .debug_info    0x00001cf9     0x1acb FreeRTOS/tasks.o
- .debug_info    0x000037c4      0x5a7 main.o
- .debug_info    0x00003d6b      0x2e2 uart.o
+ .debug_info    0x000037c4      0x373 main.o
+ .debug_info    0x00003b37      0x2c9 protocol.o
+ .debug_info    0x00003e00      0x2e2 uart.o
 
-.debug_abbrev   0x00000000     0x10e6
+.debug_abbrev   0x00000000     0x11b4
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0x5a2 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_abbrev  0x000005a2      0x11c FreeRTOS/heap_1.o
@@ -845,10 +824,11 @@ END GROUP
  .debug_abbrev  0x000007b6      0x143 FreeRTOS/port.o
  .debug_abbrev  0x000008f9      0x211 FreeRTOS/queue.o
  .debug_abbrev  0x00000b0a      0x2bf FreeRTOS/tasks.o
- .debug_abbrev  0x00000dc9      0x1a0 main.o
- .debug_abbrev  0x00000f69      0x17d uart.o
+ .debug_abbrev  0x00000dc9      0x126 main.o
+ .debug_abbrev  0x00000eef      0x148 protocol.o
+ .debug_abbrev  0x00001037      0x17d uart.o
 
-.debug_line     0x00000000     0x2493
+.debug_line     0x00000000     0x2537
  *(.debug_line .debug_line.* .debug_line_end)
  .debug_line    0x00000000      0x134 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_line    0x00000134      0x1a6 FreeRTOS/heap_1.o
@@ -856,20 +836,22 @@ END GROUP
  .debug_line    0x000004ac      0x298 FreeRTOS/port.o
  .debug_line    0x00000744      0x83d FreeRTOS/queue.o
  .debug_line    0x00000f81      0xfb5 FreeRTOS/tasks.o
- .debug_line    0x00001f36      0x2f2 main.o
- .debug_line    0x00002228      0x26b uart.o
+ .debug_line    0x00001f36      0x19c main.o
+ .debug_line    0x000020d2      0x1fa protocol.o
+ .debug_line    0x000022cc      0x26b uart.o
 
-.debug_frame    0x00000000      0xb10
+.debug_frame    0x00000000      0xb24
  *(.debug_frame)
  .debug_frame   0x00000000       0x60 FreeRTOS/heap_1.o
  .debug_frame   0x00000060       0x88 FreeRTOS/list.o
  .debug_frame   0x000000e8       0x84 FreeRTOS/port.o
  .debug_frame   0x0000016c      0x284 FreeRTOS/queue.o
  .debug_frame   0x000003f0      0x540 FreeRTOS/tasks.o
- .debug_frame   0x00000930       0xcc main.o
- .debug_frame   0x000009fc      0x114 uart.o
+ .debug_frame   0x00000930       0x64 main.o
+ .debug_frame   0x00000994       0x7c protocol.o
+ .debug_frame   0x00000a10      0x114 uart.o
 
-.debug_str      0x00000000     0x13cb
+.debug_str      0x00000000     0x13db
  *(.debug_str)
  .debug_str     0x00000000      0x208 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_str     0x00000208      0x1e5 FreeRTOS/heap_1.o
@@ -882,9 +864,11 @@ END GROUP
                                 0x6bb (size before relaxing)
  .debug_str     0x00000a6c      0x788 FreeRTOS/tasks.o
                                 0xbf5 (size before relaxing)
- .debug_str     0x000011f4      0x12f main.o
-                                0x348 (size before relaxing)
- .debug_str     0x00001323       0xa8 uart.o
+ .debug_str     0x000011f4       0x9d main.o
+                                0x29d (size before relaxing)
+ .debug_str     0x00001291       0xa2 protocol.o
+                                0x224 (size before relaxing)
+ .debug_str     0x00001333       0xa8 uart.o
                                 0x24e (size before relaxing)
 
 .debug_loc      0x00000000     0x3b27
@@ -894,7 +878,8 @@ END GROUP
  .debug_loc     0x00000236      0x274 FreeRTOS/port.o
  .debug_loc     0x000004aa     0x1375 FreeRTOS/queue.o
  .debug_loc     0x0000181f     0x1c25 FreeRTOS/tasks.o
- .debug_loc     0x00003444      0x4c7 main.o
+ .debug_loc     0x00003444      0x17f main.o
+ .debug_loc     0x000035c3      0x348 protocol.o
  .debug_loc     0x0000390b      0x21c uart.o
 
 .debug_macinfo
@@ -915,15 +900,16 @@ END GROUP
 .debug_pubtypes
  *(.debug_pubtypes)
 
-.debug_ranges   0x00000000      0x3b8
+.debug_ranges   0x00000000      0x3c0
  *(.debug_ranges)
  .debug_ranges  0x00000000       0x28 FreeRTOS/heap_1.o
  .debug_ranges  0x00000028       0x30 FreeRTOS/list.o
  .debug_ranges  0x00000058       0x40 FreeRTOS/port.o
  .debug_ranges  0x00000098       0xf0 FreeRTOS/queue.o
  .debug_ranges  0x00000188      0x190 FreeRTOS/tasks.o
- .debug_ranges  0x00000318       0x50 main.o
- .debug_ranges  0x00000368       0x50 uart.o
+ .debug_ranges  0x00000318       0x20 main.o
+ .debug_ranges  0x00000338       0x38 protocol.o
+ .debug_ranges  0x00000370       0x50 uart.o
 
 .debug_macro
  *(.debug_macro)

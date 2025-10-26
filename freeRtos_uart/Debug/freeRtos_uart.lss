@@ -13,21 +13,21 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00001778  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 00000388  00000000  00000000  000017b8  2**0
+  5 .debug_aranges 000003a0  00000000  00000000  000017b8  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   0000404d  00000000  00000000  00001b40  2**0
+  6 .debug_info   000040e2  00000000  00000000  00001b58  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 000010e6  00000000  00000000  00005b8d  2**0
+  7 .debug_abbrev 000011b4  00000000  00000000  00005c3a  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   00002493  00000000  00000000  00006c73  2**0
+  8 .debug_line   00002537  00000000  00000000  00006dee  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000b10  00000000  00000000  00009108  2**2
+  9 .debug_frame  00000b24  00000000  00000000  00009328  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000013cb  00000000  00000000  00009c18  2**0
+ 10 .debug_str    000013db  00000000  00000000  00009e4c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00003b27  00000000  00000000  0000afe3  2**0
+ 11 .debug_loc    00003b27  00000000  00000000  0000b227  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 000003b8  00000000  00000000  0000eb0a  2**0
+ 12 .debug_ranges 000003c0  00000000  00000000  0000ed4e  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -94,7 +94,7 @@ Disassembly of section .text:
       94:	a6 3f       	cpi	r26, 0xF6	; 246
       96:	b2 07       	cpc	r27, r18
       98:	e1 f7       	brne	.-8      	; 0x92 <.do_clear_bss_loop>
-      9a:	0e 94 3d 0a 	call	0x147a	; 0x147a <main>
+      9a:	0e 94 af 09 	call	0x135e	; 0x135e <main>
       9e:	0c 94 4c 0b 	jmp	0x1698	; 0x1698 <_exit>
 
 000000a2 <__bad_interrupt>:
@@ -2641,517 +2641,516 @@ void vTaskMissedYield( void )
     12ae:	80 93 41 04 	sts	0x0441, r24	; 0x800441 <xYieldPending>
     12b2:	08 95       	ret
 
-000012b4 <calculate_checksum>:
- * @brief PDF 프로토콜에 정의된 체크섬을 계산합니다. 
- * @param buffer '$'를 제외한 패킷 데이터 (ID부터 Checksum 앞까지)
- * @param length 체크섬 계산에 포함될 바이트 수
- * @return 계산된 체크섬
- */
-static uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
-    12b4:	ac 01       	movw	r20, r24
-    uint8_t sum = 0;
-    for (uint8_t i = 0; i < length; i++) {
-    12b6:	90 e0       	ldi	r25, 0x00	; 0
- * @param buffer '$'를 제외한 패킷 데이터 (ID부터 Checksum 앞까지)
- * @param length 체크섬 계산에 포함될 바이트 수
- * @return 계산된 체크섬
- */
-static uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
-    uint8_t sum = 0;
-    12b8:	80 e0       	ldi	r24, 0x00	; 0
-    for (uint8_t i = 0; i < length; i++) {
-    12ba:	06 c0       	rjmp	.+12     	; 0x12c8 <calculate_checksum+0x14>
-        sum += buffer[i];
-    12bc:	fa 01       	movw	r30, r20
-    12be:	e9 0f       	add	r30, r25
-    12c0:	f1 1d       	adc	r31, r1
-    12c2:	20 81       	ld	r18, Z
-    12c4:	82 0f       	add	r24, r18
- * @param length 체크섬 계산에 포함될 바이트 수
- * @return 계산된 체크섬
- */
-static uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
-    uint8_t sum = 0;
-    for (uint8_t i = 0; i < length; i++) {
-    12c6:	9f 5f       	subi	r25, 0xFF	; 255
-    12c8:	96 17       	cp	r25, r22
-    12ca:	c0 f3       	brcs	.-16     	; 0x12bc <calculate_checksum+0x8>
-        sum += buffer[i];
-    }
-    return sum;
-}
-    12cc:	08 95       	ret
-
-000012ce <vRxTask>:
+000012b4 <vRxTask>:
 
 /**
  * @brief Rx Task: 수신 링 버퍼 -> FreeRTOS 큐 (원본 코드와 동일)
  * ISR의 링 버퍼에서 바이트를 가져와 처리 태스크용 큐로 전송합니다.
  */
 void vRxTask(void *pvParameters) {
-    12ce:	cf 93       	push	r28
-    12d0:	df 93       	push	r29
-    12d2:	1f 92       	push	r1
-    12d4:	cd b7       	in	r28, 0x3d	; 61
-    12d6:	de b7       	in	r29, 0x3e	; 62
+    12b4:	cf 93       	push	r28
+    12b6:	df 93       	push	r29
+    12b8:	1f 92       	push	r1
+    12ba:	cd b7       	in	r28, 0x3d	; 61
+    12bc:	de b7       	in	r29, 0x3e	; 62
     uint8_t received_char;
     
     while (1) {
         // uart_rx()는 내부적으로 vTaskDelay(1)을 포함하여
         // 데이터가 없을 때 CPU를 양보합니다.
         received_char = uart_rx(); 
-    12d8:	0e 94 20 0b 	call	0x1640	; 0x1640 <uart_rx>
-    12dc:	89 83       	std	Y+1, r24	; 0x01
+    12be:	0e 94 20 0b 	call	0x1640	; 0x1640 <uart_rx>
+    12c2:	89 83       	std	Y+1, r24	; 0x01
         
         // 데이터를 FreeRTOS 큐로 전송 (최대 10ms 대기)
         if (xQueueSend(xUartQueue, &received_char, pdMS_TO_TICKS(10)) != pdPASS) {
-    12de:	20 e0       	ldi	r18, 0x00	; 0
-    12e0:	4a e0       	ldi	r20, 0x0A	; 10
-    12e2:	50 e0       	ldi	r21, 0x00	; 0
-    12e4:	be 01       	movw	r22, r28
-    12e6:	6f 5f       	subi	r22, 0xFF	; 255
-    12e8:	7f 4f       	sbci	r23, 0xFF	; 255
-    12ea:	80 91 b0 04 	lds	r24, 0x04B0	; 0x8004b0 <xUartQueue>
-    12ee:	90 91 b1 04 	lds	r25, 0x04B1	; 0x8004b1 <xUartQueue+0x1>
-    12f2:	0e 94 ab 03 	call	0x756	; 0x756 <xQueueGenericSend>
-    12f6:	f0 cf       	rjmp	.-32     	; 0x12d8 <vRxTask+0xa>
+    12c4:	20 e0       	ldi	r18, 0x00	; 0
+    12c6:	4a e0       	ldi	r20, 0x0A	; 10
+    12c8:	50 e0       	ldi	r21, 0x00	; 0
+    12ca:	be 01       	movw	r22, r28
+    12cc:	6f 5f       	subi	r22, 0xFF	; 255
+    12ce:	7f 4f       	sbci	r23, 0xFF	; 255
+    12d0:	80 91 a0 04 	lds	r24, 0x04A0	; 0x8004a0 <xUartQueue>
+    12d4:	90 91 a1 04 	lds	r25, 0x04A1	; 0x8004a1 <xUartQueue+0x1>
+    12d8:	0e 94 ab 03 	call	0x756	; 0x756 <xQueueGenericSend>
+    12dc:	f0 cf       	rjmp	.-32     	; 0x12be <vRxTask+0xa>
 
-000012f8 <send_response>:
- * @param slave_id 응답하는 Slave ID
- * @param cmd 'W' 또는 'R'
- * @param addr 처리한 주소
- * @param data 'R' 명령의 경우 읽은 값, 'W' 명령의 경우 쓴 값
- */
-static void send_response(uint8_t slave_id, uint8_t cmd, uint8_t addr, uint8_t data) {
-    12f8:	1f 93       	push	r17
-    12fa:	cf 93       	push	r28
-    12fc:	df 93       	push	r29
-    12fe:	cd b7       	in	r28, 0x3d	; 61
-    1300:	de b7       	in	r29, 0x3e	; 62
-    1302:	27 97       	sbiw	r28, 0x07	; 7
-    1304:	0f b6       	in	r0, 0x3f	; 63
-    1306:	f8 94       	cli
-    1308:	de bf       	out	0x3e, r29	; 62
-    130a:	0f be       	out	0x3f, r0	; 63
-    130c:	cd bf       	out	0x3d, r28	; 61
-    uint8_t response[7]; // 응답 프레임 (7바이트 고정)
-    uint8_t checksum;
-
-    response[0] = '$';
-    130e:	94 e2       	ldi	r25, 0x24	; 36
-    1310:	99 83       	std	Y+1, r25	; 0x01
-    response[1] = slave_id;
-    1312:	8a 83       	std	Y+2, r24	; 0x02
-    response[2] = cmd;
-    1314:	6b 83       	std	Y+3, r22	; 0x03
-    response[3] = addr;
-    1316:	4c 83       	std	Y+4, r20	; 0x04
-    response[4] = data; // R 응답 시 읽은 데이터 
-    1318:	2d 83       	std	Y+5, r18	; 0x05
-    
-    // 체크섬 계산: ID부터 데이터까지의 합 
-    checksum = calculate_checksum(&response[1], 4); 
-    131a:	64 e0       	ldi	r22, 0x04	; 4
-    131c:	ce 01       	movw	r24, r28
-    131e:	02 96       	adiw	r24, 0x02	; 2
-    1320:	0e 94 5a 09 	call	0x12b4	; 0x12b4 <calculate_checksum>
-    
-    response[5] = checksum;
-    1324:	8e 83       	std	Y+6, r24	; 0x06
-    response[6] = '\n';
-    1326:	8a e0       	ldi	r24, 0x0A	; 10
-    1328:	8f 83       	std	Y+7, r24	; 0x07
-
-    // uart_tx 함수는 RS-485 송신 모드를 자동으로 처리합니다.
-    for (uint8_t i = 0; i < 7; i++) {
-    132a:	10 e0       	ldi	r17, 0x00	; 0
-    132c:	0a c0       	rjmp	.+20     	; 0x1342 <send_response+0x4a>
-        uart_tx(response[i]);
-    132e:	e1 e0       	ldi	r30, 0x01	; 1
-    1330:	f0 e0       	ldi	r31, 0x00	; 0
-    1332:	ec 0f       	add	r30, r28
-    1334:	fd 1f       	adc	r31, r29
-    1336:	e1 0f       	add	r30, r17
-    1338:	f1 1d       	adc	r31, r1
-    133a:	80 81       	ld	r24, Z
-    133c:	0e 94 f9 0a 	call	0x15f2	; 0x15f2 <uart_tx>
-    
-    response[5] = checksum;
-    response[6] = '\n';
-
-    // uart_tx 함수는 RS-485 송신 모드를 자동으로 처리합니다.
-    for (uint8_t i = 0; i < 7; i++) {
-    1340:	1f 5f       	subi	r17, 0xFF	; 255
-    1342:	17 30       	cpi	r17, 0x07	; 7
-    1344:	a0 f3       	brcs	.-24     	; 0x132e <send_response+0x36>
-        uart_tx(response[i]);
-    }
-}
-    1346:	27 96       	adiw	r28, 0x07	; 7
-    1348:	0f b6       	in	r0, 0x3f	; 63
-    134a:	f8 94       	cli
-    134c:	de bf       	out	0x3e, r29	; 62
-    134e:	0f be       	out	0x3f, r0	; 63
-    1350:	cd bf       	out	0x3d, r28	; 61
-    1352:	df 91       	pop	r29
-    1354:	cf 91       	pop	r28
-    1356:	1f 91       	pop	r17
-    1358:	08 95       	ret
-
-0000135a <process_packet>:
-/**
- * @brief 수신된 패킷을 파싱하고 처리합니다. (Slave 로직) 
- * @param buffer 수신된 전체 패킷 ('$'...'\n' 포함)
- * @param length 패킷의 전체 길이
- */
-static void process_packet(uint8_t *buffer, uint8_t length) {
-    135a:	ef 92       	push	r14
-    135c:	ff 92       	push	r15
-    135e:	0f 93       	push	r16
-    1360:	1f 93       	push	r17
-    1362:	cf 93       	push	r28
-    1364:	df 93       	push	r29
-    // 1. 최소 길이 확인 (W: 7바이트, R: 6바이트)
-    if (length < 6) return; // 너무 짧음
-    1366:	66 30       	cpi	r22, 0x06	; 6
-    1368:	08 f4       	brcc	.+2      	; 0x136c <process_packet+0x12>
-    136a:	40 c0       	rjmp	.+128    	; 0x13ec <process_packet+0x92>
-
-    // 2. Slave ID 확인
-    uint8_t slave_id = buffer[FRAME_IDX_ID];
-    136c:	fc 01       	movw	r30, r24
-    136e:	11 81       	ldd	r17, Z+1	; 0x01
-    if (slave_id != MY_SLAVE_ID) {
-    1370:	11 30       	cpi	r17, 0x01	; 1
-    1372:	e1 f5       	brne	.+120    	; 0x13ec <process_packet+0x92>
-        return; // 이 장치를 위한 패킷이 아님
-    }
-
-    // 3. 체크섬 확인 
-    uint8_t cmd = buffer[FRAME_IDX_CMD];
-    1374:	02 81       	ldd	r16, Z+2	; 0x02
-    uint8_t addr = buffer[FRAME_IDX_ADDR];
-    1376:	f3 80       	ldd	r15, Z+3	; 0x03
-    uint8_t received_checksum;
-    uint8_t calculated_checksum;
-    uint8_t data_len_for_checksum;
-
-    if (cmd == 'W') {
-    1378:	07 35       	cpi	r16, 0x57	; 87
-    137a:	29 f4       	brne	.+10     	; 0x1386 <process_packet+0x2c>
-        
-		if (length != 7) return; // 'W' 명령은 7바이트여야 함 
-    137c:	67 30       	cpi	r22, 0x07	; 7
-    137e:	b1 f5       	brne	.+108    	; 0x13ec <process_packet+0x92>
-        received_checksum = buffer[FRAME_IDX_W_CHECKSUM];
-    1380:	e5 80       	ldd	r14, Z+5	; 0x05
-        data_len_for_checksum = 4; // ID, Cmd, Addr, Data
-    1382:	64 e0       	ldi	r22, 0x04	; 4
-    1384:	0b c0       	rjmp	.+22     	; 0x139c <process_packet+0x42>
-		
-    } else if (cmd == 'R') {
-    1386:	02 35       	cpi	r16, 0x52	; 82
-    1388:	89 f5       	brne	.+98     	; 0x13ec <process_packet+0x92>
-        
-		if (length != 6) return; // 'R' 명령은 6바이트여야 함  (Data 필드 없음)
-    138a:	66 30       	cpi	r22, 0x06	; 6
-    138c:	79 f5       	brne	.+94     	; 0x13ec <process_packet+0x92>
-        received_checksum = buffer[length - 2]; // Checksum은 \n 바로 앞
-    138e:	e6 2f       	mov	r30, r22
-    1390:	f0 e0       	ldi	r31, 0x00	; 0
-    1392:	32 97       	sbiw	r30, 0x02	; 2
-    1394:	e8 0f       	add	r30, r24
-    1396:	f9 1f       	adc	r31, r25
-    1398:	e0 80       	ld	r14, Z
-		data_len_for_checksum = 3; // ID, Cmd, Addr
-    139a:	63 e0       	ldi	r22, 0x03	; 3
-    139c:	ec 01       	movw	r28, r24
-		
-    } else {
-        return; // 알 수 없는 명령
-    }
-    
-    calculated_checksum = calculate_checksum(&buffer[FRAME_IDX_ID], data_len_for_checksum);
-    139e:	01 96       	adiw	r24, 0x01	; 1
-    13a0:	0e 94 5a 09 	call	0x12b4	; 0x12b4 <calculate_checksum>
-
-    if (received_checksum != calculated_checksum) {
-    13a4:	e8 12       	cpse	r14, r24
-    13a6:	22 c0       	rjmp	.+68     	; 0x13ec <process_packet+0x92>
-        return; // 체크섬 오류
-    }else{
-		// 4. 유효성 검사 통과 -> 명령 처리
-		uint8_t data;
-		if (cmd == 'W') {
-    13a8:	07 35       	cpi	r16, 0x57	; 87
-    13aa:	79 f4       	brne	.+30     	; 0x13ca <process_packet+0x70>
-			data = buffer[FRAME_IDX_W_DATA];
-    13ac:	2c 81       	ldd	r18, Y+4	; 0x04
-			if (addr < 16) { // 가상 레지스터 범위 확인
-    13ae:	ff e0       	ldi	r31, 0x0F	; 15
-    13b0:	ff 15       	cp	r31, r15
-    13b2:	28 f0       	brcs	.+10     	; 0x13be <process_packet+0x64>
-				g_device_registers[addr] = data;
-    13b4:	ef 2d       	mov	r30, r15
-    13b6:	f0 e0       	ldi	r31, 0x00	; 0
-    13b8:	e0 56       	subi	r30, 0x60	; 96
-    13ba:	fb 4f       	sbci	r31, 0xFB	; 251
-    13bc:	20 83       	st	Z, r18
-			}
-			// 'W' 명령에 대한 응답
-			send_response(slave_id, cmd, addr, data);
-    13be:	4f 2d       	mov	r20, r15
-    13c0:	60 2f       	mov	r22, r16
-    13c2:	81 2f       	mov	r24, r17
-    13c4:	0e 94 7c 09 	call	0x12f8	; 0x12f8 <send_response>
-    13c8:	11 c0       	rjmp	.+34     	; 0x13ec <process_packet+0x92>
-			    
-			} else if (cmd == 'R') {
-    13ca:	02 35       	cpi	r16, 0x52	; 82
-    13cc:	79 f4       	brne	.+30     	; 0x13ec <process_packet+0x92>
-				data = 0;
-				if (addr < 16) { // 가상 레지스터 범위 확인
-    13ce:	8f e0       	ldi	r24, 0x0F	; 15
-    13d0:	8f 15       	cp	r24, r15
-    13d2:	30 f0       	brcs	.+12     	; 0x13e0 <process_packet+0x86>
-					data = g_device_registers[addr];
-    13d4:	ef 2d       	mov	r30, r15
-    13d6:	f0 e0       	ldi	r31, 0x00	; 0
-    13d8:	e0 56       	subi	r30, 0x60	; 96
-    13da:	fb 4f       	sbci	r31, 0xFB	; 251
-    13dc:	20 81       	ld	r18, Z
-    13de:	01 c0       	rjmp	.+2      	; 0x13e2 <process_packet+0x88>
-			}
-			// 'W' 명령에 대한 응답
-			send_response(slave_id, cmd, addr, data);
-			    
-			} else if (cmd == 'R') {
-				data = 0;
-    13e0:	20 e0       	ldi	r18, 0x00	; 0
-				if (addr < 16) { // 가상 레지스터 범위 확인
-					data = g_device_registers[addr];
-				}
-				// 'R' 명령에 대한 응답
-				send_response(slave_id, cmd, addr, data);
-    13e2:	4f 2d       	mov	r20, r15
-    13e4:	60 2f       	mov	r22, r16
-    13e6:	81 2f       	mov	r24, r17
-    13e8:	0e 94 7c 09 	call	0x12f8	; 0x12f8 <send_response>
-		}
-	}
-
-
-}
-    13ec:	df 91       	pop	r29
-    13ee:	cf 91       	pop	r28
-    13f0:	1f 91       	pop	r17
-    13f2:	0f 91       	pop	r16
-    13f4:	ff 90       	pop	r15
-    13f6:	ef 90       	pop	r14
-    13f8:	08 95       	ret
-
-000013fa <vProtocolTask>:
+000012de <vProtocolTask>:
 
 /**
  * @brief Protocol Task: 큐 -> 패킷 조립 -> 패킷 처리
  * vRxTask가 큐에 넣은 바이트들을 수신하여 프로토콜 패킷을 조립하고 처리합니다.
  */
 void vProtocolTask(void *pvParameters) {
-    13fa:	cf 93       	push	r28
-    13fc:	df 93       	push	r29
-    13fe:	cd b7       	in	r28, 0x3d	; 61
-    1400:	de b7       	in	r29, 0x3e	; 62
-    1402:	61 97       	sbiw	r28, 0x11	; 17
-    1404:	0f b6       	in	r0, 0x3f	; 63
-    1406:	f8 94       	cli
-    1408:	de bf       	out	0x3e, r29	; 62
-    140a:	0f be       	out	0x3f, r0	; 63
-    140c:	cd bf       	out	0x3d, r28	; 61
+    12de:	cf 93       	push	r28
+    12e0:	df 93       	push	r29
+    12e2:	cd b7       	in	r28, 0x3d	; 61
+    12e4:	de b7       	in	r29, 0x3e	; 62
+    12e6:	61 97       	sbiw	r28, 0x11	; 17
+    12e8:	0f b6       	in	r0, 0x3f	; 63
+    12ea:	f8 94       	cli
+    12ec:	de bf       	out	0x3e, r29	; 62
+    12ee:	0f be       	out	0x3f, r0	; 63
+    12f0:	cd bf       	out	0x3d, r28	; 61
     uint8_t received_char;
     uint8_t packet_buffer[PROTOCOL_BUFFER_SIZE];
     uint8_t packet_index = 0;
     
     // 수신 상태 (IDLE: '$' 대기, RECEIVING: '\n' 대기)
     enum { STATE_IDLE, STATE_RECEIVING } state = STATE_IDLE;
-    140e:	10 e0       	ldi	r17, 0x00	; 0
+    12f2:	10 e0       	ldi	r17, 0x00	; 0
  * vRxTask가 큐에 넣은 바이트들을 수신하여 프로토콜 패킷을 조립하고 처리합니다.
  */
 void vProtocolTask(void *pvParameters) {
     uint8_t received_char;
     uint8_t packet_buffer[PROTOCOL_BUFFER_SIZE];
     uint8_t packet_index = 0;
-    1410:	00 e0       	ldi	r16, 0x00	; 0
-    1412:	03 c0       	rjmp	.+6      	; 0x141a <vProtocolTask+0x20>
+    12f4:	00 e0       	ldi	r16, 0x00	; 0
+    12f6:	03 c0       	rjmp	.+6      	; 0x12fe <vProtocolTask+0x20>
                 // 패킷 조립
                 if (packet_index < PROTOCOL_BUFFER_SIZE) {
                     packet_buffer[packet_index++] = received_char;
                 } else {
                     // 버퍼 오버플로우. 패킷 무시하고 리셋
                     state = STATE_IDLE;
-    1414:	10 e0       	ldi	r17, 0x00	; 0
-    1416:	01 c0       	rjmp	.+2      	; 0x141a <vProtocolTask+0x20>
+    12f8:	10 e0       	ldi	r17, 0x00	; 0
+    12fa:	01 c0       	rjmp	.+2      	; 0x12fe <vProtocolTask+0x20>
                 }
             } 
             else if (state == STATE_RECEIVING) {
                 // 패킷 조립
                 if (packet_index < PROTOCOL_BUFFER_SIZE) {
                     packet_buffer[packet_index++] = received_char;
-    1418:	0f 2d       	mov	r16, r15
+    12fc:	0f 2d       	mov	r16, r15
     // 수신 상태 (IDLE: '$' 대기, RECEIVING: '\n' 대기)
     enum { STATE_IDLE, STATE_RECEIVING } state = STATE_IDLE;
 
     while (1) {
         // 1. FreeRTOS 큐에서 데이터 수신 (무기한 대기)
         if (xQueueReceive(xUartQueue, &received_char, portMAX_DELAY) == pdPASS) {
-    141a:	20 e0       	ldi	r18, 0x00	; 0
-    141c:	4f ef       	ldi	r20, 0xFF	; 255
-    141e:	5f ef       	ldi	r21, 0xFF	; 255
-    1420:	be 01       	movw	r22, r28
-    1422:	6f 5f       	subi	r22, 0xFF	; 255
-    1424:	7f 4f       	sbci	r23, 0xFF	; 255
-    1426:	80 91 b0 04 	lds	r24, 0x04B0	; 0x8004b0 <xUartQueue>
-    142a:	90 91 b1 04 	lds	r25, 0x04B1	; 0x8004b1 <xUartQueue+0x1>
-    142e:	0e 94 3d 04 	call	0x87a	; 0x87a <xQueueGenericReceive>
-    1432:	81 30       	cpi	r24, 0x01	; 1
-    1434:	91 f7       	brne	.-28     	; 0x141a <vProtocolTask+0x20>
+    12fe:	20 e0       	ldi	r18, 0x00	; 0
+    1300:	4f ef       	ldi	r20, 0xFF	; 255
+    1302:	5f ef       	ldi	r21, 0xFF	; 255
+    1304:	be 01       	movw	r22, r28
+    1306:	6f 5f       	subi	r22, 0xFF	; 255
+    1308:	7f 4f       	sbci	r23, 0xFF	; 255
+    130a:	80 91 a0 04 	lds	r24, 0x04A0	; 0x8004a0 <xUartQueue>
+    130e:	90 91 a1 04 	lds	r25, 0x04A1	; 0x8004a1 <xUartQueue+0x1>
+    1312:	0e 94 3d 04 	call	0x87a	; 0x87a <xQueueGenericReceive>
+    1316:	81 30       	cpi	r24, 0x01	; 1
+    1318:	91 f7       	brne	.-28     	; 0x12fe <vProtocolTask+0x20>
             
             if (state == STATE_IDLE) {
-    1436:	11 11       	cpse	r17, r1
-    1438:	07 c0       	rjmp	.+14     	; 0x1448 <vProtocolTask+0x4e>
+    131a:	11 11       	cpse	r17, r1
+    131c:	07 c0       	rjmp	.+14     	; 0x132c <vProtocolTask+0x4e>
                 // '$' (시작 문자)를 기다림
                 if (received_char == '$') {
-    143a:	89 81       	ldd	r24, Y+1	; 0x01
-    143c:	84 32       	cpi	r24, 0x24	; 36
-    143e:	69 f7       	brne	.-38     	; 0x141a <vProtocolTask+0x20>
+    131e:	89 81       	ldd	r24, Y+1	; 0x01
+    1320:	84 32       	cpi	r24, 0x24	; 36
+    1322:	69 f7       	brne	.-38     	; 0x12fe <vProtocolTask+0x20>
                     packet_index = 0;
                     packet_buffer[packet_index++] = received_char;
-    1440:	8a 83       	std	Y+2, r24	; 0x02
+    1324:	8a 83       	std	Y+2, r24	; 0x02
                     state = STATE_RECEIVING;
-    1442:	11 e0       	ldi	r17, 0x01	; 1
+    1326:	11 e0       	ldi	r17, 0x01	; 1
             
             if (state == STATE_IDLE) {
                 // '$' (시작 문자)를 기다림
                 if (received_char == '$') {
                     packet_index = 0;
                     packet_buffer[packet_index++] = received_char;
-    1444:	01 e0       	ldi	r16, 0x01	; 1
-    1446:	e9 cf       	rjmp	.-46     	; 0x141a <vProtocolTask+0x20>
+    1328:	01 e0       	ldi	r16, 0x01	; 1
+    132a:	e9 cf       	rjmp	.-46     	; 0x12fe <vProtocolTask+0x20>
                     state = STATE_RECEIVING;
                 }
             } 
             else if (state == STATE_RECEIVING) {
-    1448:	11 30       	cpi	r17, 0x01	; 1
-    144a:	39 f7       	brne	.-50     	; 0x141a <vProtocolTask+0x20>
+    132c:	11 30       	cpi	r17, 0x01	; 1
+    132e:	39 f7       	brne	.-50     	; 0x12fe <vProtocolTask+0x20>
                 // 패킷 조립
                 if (packet_index < PROTOCOL_BUFFER_SIZE) {
-    144c:	00 31       	cpi	r16, 0x10	; 16
-    144e:	10 f7       	brcc	.-60     	; 0x1414 <vProtocolTask+0x1a>
+    1330:	00 31       	cpi	r16, 0x10	; 16
+    1332:	10 f7       	brcc	.-60     	; 0x12f8 <vProtocolTask+0x1a>
                     packet_buffer[packet_index++] = received_char;
-    1450:	ff 24       	eor	r15, r15
-    1452:	f3 94       	inc	r15
-    1454:	f0 0e       	add	r15, r16
-    1456:	89 81       	ldd	r24, Y+1	; 0x01
-    1458:	e2 e0       	ldi	r30, 0x02	; 2
-    145a:	f0 e0       	ldi	r31, 0x00	; 0
-    145c:	ec 0f       	add	r30, r28
-    145e:	fd 1f       	adc	r31, r29
-    1460:	e0 0f       	add	r30, r16
-    1462:	f1 1d       	adc	r31, r1
-    1464:	80 83       	st	Z, r24
+    1334:	ff 24       	eor	r15, r15
+    1336:	f3 94       	inc	r15
+    1338:	f0 0e       	add	r15, r16
+    133a:	89 81       	ldd	r24, Y+1	; 0x01
+    133c:	e2 e0       	ldi	r30, 0x02	; 2
+    133e:	f0 e0       	ldi	r31, 0x00	; 0
+    1340:	ec 0f       	add	r30, r28
+    1342:	fd 1f       	adc	r31, r29
+    1344:	e0 0f       	add	r30, r16
+    1346:	f1 1d       	adc	r31, r1
+    1348:	80 83       	st	Z, r24
                     state = STATE_IDLE;
                     continue;
                 }
 
                 // '\n' (종료 문자) 수신 시
                 if (received_char == '\n') {
-    1466:	8a 30       	cpi	r24, 0x0A	; 10
-    1468:	b9 f6       	brne	.-82     	; 0x1418 <vProtocolTask+0x1e>
+    134a:	8a 30       	cpi	r24, 0x0A	; 10
+    134c:	b9 f6       	brne	.-82     	; 0x12fc <vProtocolTask+0x1e>
                     // Master의 요청 처리 
                     process_packet(packet_buffer, packet_index);
-    146a:	6f 2d       	mov	r22, r15
-    146c:	ce 01       	movw	r24, r28
-    146e:	02 96       	adiw	r24, 0x02	; 2
-    1470:	0e 94 ad 09 	call	0x135a	; 0x135a <process_packet>
+    134e:	6f 2d       	mov	r22, r15
+    1350:	ce 01       	movw	r24, r28
+    1352:	02 96       	adiw	r24, 0x02	; 2
+    1354:	0e 94 19 0a 	call	0x1432	; 0x1432 <process_packet>
                 }
             } 
             else if (state == STATE_RECEIVING) {
                 // 패킷 조립
                 if (packet_index < PROTOCOL_BUFFER_SIZE) {
                     packet_buffer[packet_index++] = received_char;
-    1474:	0f 2d       	mov	r16, r15
+    1358:	0f 2d       	mov	r16, r15
                 // '\n' (종료 문자) 수신 시
                 if (received_char == '\n') {
                     // Master의 요청 처리 
                     process_packet(packet_buffer, packet_index);
                     // 다음 패킷을 위해 IDLE 상태로 복귀
                     state = STATE_IDLE;
-    1476:	10 e0       	ldi	r17, 0x00	; 0
-    1478:	d0 cf       	rjmp	.-96     	; 0x141a <vProtocolTask+0x20>
+    135a:	10 e0       	ldi	r17, 0x00	; 0
+    135c:	d0 cf       	rjmp	.-96     	; 0x12fe <vProtocolTask+0x20>
 
-0000147a <main>:
+0000135e <main>:
 }
 
 
 int main(void) {
     // UART 드라이버 초기화
     uart_init(BAUD);
-    147a:	60 e8       	ldi	r22, 0x80	; 128
-    147c:	75 e2       	ldi	r23, 0x25	; 37
-    147e:	80 e0       	ldi	r24, 0x00	; 0
-    1480:	90 e0       	ldi	r25, 0x00	; 0
-    1482:	0e 94 e2 0a 	call	0x15c4	; 0x15c4 <uart_init>
+    135e:	60 e8       	ldi	r22, 0x80	; 128
+    1360:	75 e2       	ldi	r23, 0x25	; 37
+    1362:	80 e0       	ldi	r24, 0x00	; 0
+    1364:	90 e0       	ldi	r25, 0x00	; 0
+    1366:	0e 94 e2 0a 	call	0x15c4	; 0x15c4 <uart_init>
     
     // 큐 생성: 64개의 8비트(uint8_t) 요소를 저장
     // 수신 버퍼링을 위해 넉넉하게 설정
     xUartQueue = xQueueCreate(64, sizeof(uint8_t));
-    1486:	40 e0       	ldi	r20, 0x00	; 0
-    1488:	61 e0       	ldi	r22, 0x01	; 1
-    148a:	80 e4       	ldi	r24, 0x40	; 64
-    148c:	0e 94 81 03 	call	0x702	; 0x702 <xQueueGenericCreate>
-    1490:	90 93 b1 04 	sts	0x04B1, r25	; 0x8004b1 <xUartQueue+0x1>
-    1494:	80 93 b0 04 	sts	0x04B0, r24	; 0x8004b0 <xUartQueue>
+    136a:	40 e0       	ldi	r20, 0x00	; 0
+    136c:	61 e0       	ldi	r22, 0x01	; 1
+    136e:	80 e4       	ldi	r24, 0x40	; 64
+    1370:	0e 94 81 03 	call	0x702	; 0x702 <xQueueGenericCreate>
+    1374:	90 93 a1 04 	sts	0x04A1, r25	; 0x8004a1 <xUartQueue+0x1>
+    1378:	80 93 a0 04 	sts	0x04A0, r24	; 0x8004a0 <xUartQueue>
 
     if (xUartQueue != NULL) {
-    1498:	89 2b       	or	r24, r25
-    149a:	d1 f0       	breq	.+52     	; 0x14d0 <main+0x56>
+    137c:	89 2b       	or	r24, r25
+    137e:	d1 f0       	breq	.+52     	; 0x13b4 <main+0x56>
         // Rx Task 생성 (높은 우선순위: 수신 데이터를 빠르게 링 버퍼에서 큐로 이동)
         xTaskCreate(
-    149c:	e1 2c       	mov	r14, r1
-    149e:	f1 2c       	mov	r15, r1
-    14a0:	02 e0       	ldi	r16, 0x02	; 2
-    14a2:	20 e0       	ldi	r18, 0x00	; 0
-    14a4:	30 e0       	ldi	r19, 0x00	; 0
-    14a6:	45 e5       	ldi	r20, 0x55	; 85
-    14a8:	50 e0       	ldi	r21, 0x00	; 0
-    14aa:	65 e0       	ldi	r22, 0x05	; 5
-    14ac:	71 e0       	ldi	r23, 0x01	; 1
-    14ae:	87 e6       	ldi	r24, 0x67	; 103
-    14b0:	99 e0       	ldi	r25, 0x09	; 9
-    14b2:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
+    1380:	e1 2c       	mov	r14, r1
+    1382:	f1 2c       	mov	r15, r1
+    1384:	02 e0       	ldi	r16, 0x02	; 2
+    1386:	20 e0       	ldi	r18, 0x00	; 0
+    1388:	30 e0       	ldi	r19, 0x00	; 0
+    138a:	45 e5       	ldi	r20, 0x55	; 85
+    138c:	50 e0       	ldi	r21, 0x00	; 0
+    138e:	65 e0       	ldi	r22, 0x05	; 5
+    1390:	71 e0       	ldi	r23, 0x01	; 1
+    1392:	8a e5       	ldi	r24, 0x5A	; 90
+    1394:	99 e0       	ldi	r25, 0x09	; 9
+    1396:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
             tskIDLE_PRIORITY + 2,
             NULL
         );
 
         // Protocol Task 생성 (상대적으로 낮은 우선순위: 패킷 처리)
         xTaskCreate(
-    14b6:	01 e0       	ldi	r16, 0x01	; 1
-    14b8:	20 e0       	ldi	r18, 0x00	; 0
-    14ba:	30 e0       	ldi	r19, 0x00	; 0
-    14bc:	49 eb       	ldi	r20, 0xB9	; 185
-    14be:	50 e0       	ldi	r21, 0x00	; 0
-    14c0:	6c e0       	ldi	r22, 0x0C	; 12
-    14c2:	71 e0       	ldi	r23, 0x01	; 1
-    14c4:	8d ef       	ldi	r24, 0xFD	; 253
-    14c6:	99 e0       	ldi	r25, 0x09	; 9
-    14c8:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
+    139a:	01 e0       	ldi	r16, 0x01	; 1
+    139c:	20 e0       	ldi	r18, 0x00	; 0
+    139e:	30 e0       	ldi	r19, 0x00	; 0
+    13a0:	49 eb       	ldi	r20, 0xB9	; 185
+    13a2:	50 e0       	ldi	r21, 0x00	; 0
+    13a4:	6c e0       	ldi	r22, 0x0C	; 12
+    13a6:	71 e0       	ldi	r23, 0x01	; 1
+    13a8:	8f e6       	ldi	r24, 0x6F	; 111
+    13aa:	99 e0       	ldi	r25, 0x09	; 9
+    13ac:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
             tskIDLE_PRIORITY + 1,
             NULL
         );
         
         // FreeRTOS 스케줄러 시작
         vTaskStartScheduler();
-    14cc:	0e 94 bb 06 	call	0xd76	; 0xd76 <vTaskStartScheduler>
-    14d0:	ff cf       	rjmp	.-2      	; 0x14d0 <main+0x56>
+    13b0:	0e 94 bb 06 	call	0xd76	; 0xd76 <vTaskStartScheduler>
+    13b4:	ff cf       	rjmp	.-2      	; 0x13b4 <main+0x56>
+
+000013b6 <calculate_checksum>:
+ * @brief PDF 프로토콜에 정의된 체크섬을 계산합니다. 
+ * @param buffer '$'를 제외한 패킷 데이터 (ID부터 Checksum 앞까지)
+ * @param length 체크섬 계산에 포함될 바이트 수
+ * @return 계산된 체크섬
+ */
+uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
+    13b6:	ac 01       	movw	r20, r24
+	uint8_t sum = 0;
+	for (uint8_t i = 0; i < length; i++) {
+    13b8:	90 e0       	ldi	r25, 0x00	; 0
+ * @param buffer '$'를 제외한 패킷 데이터 (ID부터 Checksum 앞까지)
+ * @param length 체크섬 계산에 포함될 바이트 수
+ * @return 계산된 체크섬
+ */
+uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
+	uint8_t sum = 0;
+    13ba:	80 e0       	ldi	r24, 0x00	; 0
+	for (uint8_t i = 0; i < length; i++) {
+    13bc:	06 c0       	rjmp	.+12     	; 0x13ca <calculate_checksum+0x14>
+		sum += buffer[i];
+    13be:	fa 01       	movw	r30, r20
+    13c0:	e9 0f       	add	r30, r25
+    13c2:	f1 1d       	adc	r31, r1
+    13c4:	20 81       	ld	r18, Z
+    13c6:	82 0f       	add	r24, r18
+ * @param length 체크섬 계산에 포함될 바이트 수
+ * @return 계산된 체크섬
+ */
+uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
+	uint8_t sum = 0;
+	for (uint8_t i = 0; i < length; i++) {
+    13c8:	9f 5f       	subi	r25, 0xFF	; 255
+    13ca:	96 17       	cp	r25, r22
+    13cc:	c0 f3       	brcs	.-16     	; 0x13be <calculate_checksum+0x8>
+		sum += buffer[i];
+	}
+	return sum;
+}
+    13ce:	08 95       	ret
+
+000013d0 <send_response>:
+ * @param slave_id 응답하는 Slave ID
+ * @param cmd 'W' 또는 'R'
+ * @param addr 처리한 주소
+ * @param data 'R' 명령의 경우 읽은 값, 'W' 명령의 경우 쓴 값
+ */
+void send_response(uint8_t slave_id, uint8_t cmd, uint8_t addr, uint8_t data) {
+    13d0:	1f 93       	push	r17
+    13d2:	cf 93       	push	r28
+    13d4:	df 93       	push	r29
+    13d6:	cd b7       	in	r28, 0x3d	; 61
+    13d8:	de b7       	in	r29, 0x3e	; 62
+    13da:	27 97       	sbiw	r28, 0x07	; 7
+    13dc:	0f b6       	in	r0, 0x3f	; 63
+    13de:	f8 94       	cli
+    13e0:	de bf       	out	0x3e, r29	; 62
+    13e2:	0f be       	out	0x3f, r0	; 63
+    13e4:	cd bf       	out	0x3d, r28	; 61
+	uint8_t response[7]; // 응답 프레임 (7바이트 고정)
+	uint8_t checksum;
+
+	response[0] = '$';
+    13e6:	94 e2       	ldi	r25, 0x24	; 36
+    13e8:	99 83       	std	Y+1, r25	; 0x01
+	response[1] = slave_id;
+    13ea:	8a 83       	std	Y+2, r24	; 0x02
+	response[2] = cmd;
+    13ec:	6b 83       	std	Y+3, r22	; 0x03
+	response[3] = addr;
+    13ee:	4c 83       	std	Y+4, r20	; 0x04
+	response[4] = data; // R 응답 시 읽은 데이터
+    13f0:	2d 83       	std	Y+5, r18	; 0x05
+	
+	// 체크섬 계산: ID부터 데이터까지의 합
+	checksum = calculate_checksum(&response[1], 4);
+    13f2:	64 e0       	ldi	r22, 0x04	; 4
+    13f4:	ce 01       	movw	r24, r28
+    13f6:	02 96       	adiw	r24, 0x02	; 2
+    13f8:	0e 94 db 09 	call	0x13b6	; 0x13b6 <calculate_checksum>
+	
+	response[5] = checksum;
+    13fc:	8e 83       	std	Y+6, r24	; 0x06
+	response[6] = '\n';
+    13fe:	8a e0       	ldi	r24, 0x0A	; 10
+    1400:	8f 83       	std	Y+7, r24	; 0x07
+
+	// uart_tx 함수는 RS-485 송신 모드를 자동으로 처리합니다.
+	for (uint8_t i = 0; i < 7; i++) {
+    1402:	10 e0       	ldi	r17, 0x00	; 0
+    1404:	0a c0       	rjmp	.+20     	; 0x141a <send_response+0x4a>
+		uart_tx(response[i]);
+    1406:	e1 e0       	ldi	r30, 0x01	; 1
+    1408:	f0 e0       	ldi	r31, 0x00	; 0
+    140a:	ec 0f       	add	r30, r28
+    140c:	fd 1f       	adc	r31, r29
+    140e:	e1 0f       	add	r30, r17
+    1410:	f1 1d       	adc	r31, r1
+    1412:	80 81       	ld	r24, Z
+    1414:	0e 94 f9 0a 	call	0x15f2	; 0x15f2 <uart_tx>
+	
+	response[5] = checksum;
+	response[6] = '\n';
+
+	// uart_tx 함수는 RS-485 송신 모드를 자동으로 처리합니다.
+	for (uint8_t i = 0; i < 7; i++) {
+    1418:	1f 5f       	subi	r17, 0xFF	; 255
+    141a:	17 30       	cpi	r17, 0x07	; 7
+    141c:	a0 f3       	brcs	.-24     	; 0x1406 <send_response+0x36>
+		uart_tx(response[i]);
+	}
+}
+    141e:	27 96       	adiw	r28, 0x07	; 7
+    1420:	0f b6       	in	r0, 0x3f	; 63
+    1422:	f8 94       	cli
+    1424:	de bf       	out	0x3e, r29	; 62
+    1426:	0f be       	out	0x3f, r0	; 63
+    1428:	cd bf       	out	0x3d, r28	; 61
+    142a:	df 91       	pop	r29
+    142c:	cf 91       	pop	r28
+    142e:	1f 91       	pop	r17
+    1430:	08 95       	ret
+
+00001432 <process_packet>:
+/**
+ * @brief 수신된 패킷을 파싱하고 처리합니다. (Slave 로직) 
+ * @param buffer 수신된 전체 패킷 ('$'...'\n' 포함)
+ * @param length 패킷의 전체 길이
+ */
+void process_packet(uint8_t *buffer, uint8_t length) {
+    1432:	ef 92       	push	r14
+    1434:	ff 92       	push	r15
+    1436:	0f 93       	push	r16
+    1438:	1f 93       	push	r17
+    143a:	cf 93       	push	r28
+    143c:	df 93       	push	r29
+	// 1. 최소 길이 확인 (W: 7바이트, R: 6바이트)
+	if (length < 6) return; // 너무 짧음
+    143e:	66 30       	cpi	r22, 0x06	; 6
+    1440:	08 f4       	brcc	.+2      	; 0x1444 <process_packet+0x12>
+    1442:	40 c0       	rjmp	.+128    	; 0x14c4 <process_packet+0x92>
+
+	// 2. Slave ID 확인
+	uint8_t slave_id = buffer[FRAME_IDX_ID];
+    1444:	fc 01       	movw	r30, r24
+    1446:	11 81       	ldd	r17, Z+1	; 0x01
+	if (slave_id != MY_SLAVE_ID) {
+    1448:	11 30       	cpi	r17, 0x01	; 1
+    144a:	e1 f5       	brne	.+120    	; 0x14c4 <process_packet+0x92>
+		return; // 이 장치를 위한 패킷이 아님
+	}
+
+	// 3. 체크섬 확인
+	uint8_t cmd = buffer[FRAME_IDX_CMD];
+    144c:	02 81       	ldd	r16, Z+2	; 0x02
+	uint8_t addr = buffer[FRAME_IDX_ADDR];
+    144e:	f3 80       	ldd	r15, Z+3	; 0x03
+	uint8_t received_checksum;
+	uint8_t calculated_checksum;
+	uint8_t data_len_for_checksum;
+
+	if (cmd == 'W') {
+    1450:	07 35       	cpi	r16, 0x57	; 87
+    1452:	29 f4       	brne	.+10     	; 0x145e <process_packet+0x2c>
+		
+		if (length != 7) return; // 'W' 명령은 7바이트여야 함
+    1454:	67 30       	cpi	r22, 0x07	; 7
+    1456:	b1 f5       	brne	.+108    	; 0x14c4 <process_packet+0x92>
+		received_checksum = buffer[FRAME_IDX_W_CHECKSUM];
+    1458:	e5 80       	ldd	r14, Z+5	; 0x05
+		data_len_for_checksum = 4; // ID, Cmd, Addr, Data
+    145a:	64 e0       	ldi	r22, 0x04	; 4
+    145c:	0b c0       	rjmp	.+22     	; 0x1474 <process_packet+0x42>
+		
+		} else if (cmd == 'R') {
+    145e:	02 35       	cpi	r16, 0x52	; 82
+    1460:	89 f5       	brne	.+98     	; 0x14c4 <process_packet+0x92>
+		
+		if (length != 6) return; // 'R' 명령은 6바이트여야 함  (Data 필드 없음)
+    1462:	66 30       	cpi	r22, 0x06	; 6
+    1464:	79 f5       	brne	.+94     	; 0x14c4 <process_packet+0x92>
+		received_checksum = buffer[length - 2]; // Checksum은 \n 바로 앞
+    1466:	e6 2f       	mov	r30, r22
+    1468:	f0 e0       	ldi	r31, 0x00	; 0
+    146a:	32 97       	sbiw	r30, 0x02	; 2
+    146c:	e8 0f       	add	r30, r24
+    146e:	f9 1f       	adc	r31, r25
+    1470:	e0 80       	ld	r14, Z
+		data_len_for_checksum = 3; // ID, Cmd, Addr
+    1472:	63 e0       	ldi	r22, 0x03	; 3
+    1474:	ec 01       	movw	r28, r24
+		
+		} else {
+		return; // 알 수 없는 명령
+	}
+	
+	calculated_checksum = calculate_checksum(&buffer[FRAME_IDX_ID], data_len_for_checksum);
+    1476:	01 96       	adiw	r24, 0x01	; 1
+    1478:	0e 94 db 09 	call	0x13b6	; 0x13b6 <calculate_checksum>
+
+	if (received_checksum != calculated_checksum) {
+    147c:	e8 12       	cpse	r14, r24
+    147e:	22 c0       	rjmp	.+68     	; 0x14c4 <process_packet+0x92>
+		return; // 체크섬 오류
+		}else{
+		// 4. 유효성 검사 통과 -> 명령 처리
+		uint8_t data;
+		if (cmd == 'W') {
+    1480:	07 35       	cpi	r16, 0x57	; 87
+    1482:	79 f4       	brne	.+30     	; 0x14a2 <process_packet+0x70>
+			data = buffer[FRAME_IDX_W_DATA];
+    1484:	2c 81       	ldd	r18, Y+4	; 0x04
+			if (addr < 16) { // 가상 레지스터 범위 확인
+    1486:	ff e0       	ldi	r31, 0x0F	; 15
+    1488:	ff 15       	cp	r31, r15
+    148a:	28 f0       	brcs	.+10     	; 0x1496 <process_packet+0x64>
+				g_device_registers[addr] = data;
+    148c:	ef 2d       	mov	r30, r15
+    148e:	f0 e0       	ldi	r31, 0x00	; 0
+    1490:	ee 55       	subi	r30, 0x5E	; 94
+    1492:	fb 4f       	sbci	r31, 0xFB	; 251
+    1494:	20 83       	st	Z, r18
+			}
+			// 'W' 명령에 대한 응답
+			send_response(slave_id, cmd, addr, data);
+    1496:	4f 2d       	mov	r20, r15
+    1498:	60 2f       	mov	r22, r16
+    149a:	81 2f       	mov	r24, r17
+    149c:	0e 94 e8 09 	call	0x13d0	; 0x13d0 <send_response>
+    14a0:	11 c0       	rjmp	.+34     	; 0x14c4 <process_packet+0x92>
+			
+			} else if (cmd == 'R') {
+    14a2:	02 35       	cpi	r16, 0x52	; 82
+    14a4:	79 f4       	brne	.+30     	; 0x14c4 <process_packet+0x92>
+			data = 0;
+			if (addr < 16) { // 가상 레지스터 범위 확인
+    14a6:	8f e0       	ldi	r24, 0x0F	; 15
+    14a8:	8f 15       	cp	r24, r15
+    14aa:	30 f0       	brcs	.+12     	; 0x14b8 <process_packet+0x86>
+				data = g_device_registers[addr];
+    14ac:	ef 2d       	mov	r30, r15
+    14ae:	f0 e0       	ldi	r31, 0x00	; 0
+    14b0:	ee 55       	subi	r30, 0x5E	; 94
+    14b2:	fb 4f       	sbci	r31, 0xFB	; 251
+    14b4:	20 81       	ld	r18, Z
+    14b6:	01 c0       	rjmp	.+2      	; 0x14ba <process_packet+0x88>
+			}
+			// 'W' 명령에 대한 응답
+			send_response(slave_id, cmd, addr, data);
+			
+			} else if (cmd == 'R') {
+			data = 0;
+    14b8:	20 e0       	ldi	r18, 0x00	; 0
+			if (addr < 16) { // 가상 레지스터 범위 확인
+				data = g_device_registers[addr];
+			}
+			// 'R' 명령에 대한 응답
+			send_response(slave_id, cmd, addr, data);
+    14ba:	4f 2d       	mov	r20, r15
+    14bc:	60 2f       	mov	r22, r16
+    14be:	81 2f       	mov	r24, r17
+    14c0:	0e 94 e8 09 	call	0x13d0	; 0x13d0 <send_response>
+		}
+	}
+
+
+    14c4:	df 91       	pop	r29
+    14c6:	cf 91       	pop	r28
+    14c8:	1f 91       	pop	r17
+    14ca:	0f 91       	pop	r16
+    14cc:	ff 90       	pop	r15
+    14ce:	ef 90       	pop	r14
+    14d0:	08 95       	ret
 
 000014d2 <__vector_18>:
 volatile uint8_t rx_buffer[USART_RX_BUFFER_SIZE];
