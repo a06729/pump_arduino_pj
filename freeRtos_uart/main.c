@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h> // memset_P 추가
 #include "uart.h"
+#include "motor.h"
 #include "protocol.h"
+
 
 // FreeRTOS 헤더 파일
 #include "FreeRTOS/FreeRTOS.h"
@@ -85,12 +87,17 @@ void vProtocolTask(void *pvParameters) {
 int main(void) {
     // UART 드라이버 초기화
     uart_init(BAUD);
+	//모터 초기화
+	motor_init();
+	timer0_init();
     
     // 큐 생성: 64개의 8비트(uint8_t) 요소를 저장
     // 수신 버퍼링을 위해 넉넉하게 설정
     xUartQueue = xQueueCreate(64, sizeof(uint8_t));
 
     if (xUartQueue != NULL) {
+		motor_W1();
+
         // Rx Task 생성 (높은 우선순위: 수신 데이터를 빠르게 링 버퍼에서 큐로 이동)
         xTaskCreate(
             vRxTask,

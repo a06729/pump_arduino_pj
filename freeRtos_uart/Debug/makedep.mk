@@ -20,7 +20,11 @@ FreeRTOS\timers.c
 
 main.c
 
+motor.c
+
 protocol.c
+
+timer.c
 
 uart.c
 
