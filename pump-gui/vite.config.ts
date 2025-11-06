@@ -3,10 +3,14 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import electron from 'vite-plugin-electron';
 import renderer from 'vite-plugin-electron-renderer';
+import path from "path"
+import tailwindcss from "@tailwindcss/vite"
+
 
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     electron([
       {
         // 메인 프로세스 진입점
@@ -33,6 +37,11 @@ export default defineConfig({
     ]),
     renderer(),
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   // 프로덕션 빌드 시 Electron이 파일을 찾을 수 있도록 base 경로 수정
   base: './',
 });
