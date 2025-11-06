@@ -18,7 +18,14 @@ export default defineConfig({
         vite: {
           build: {
             outDir: 'dist/electron/main', // 출력 경로 수정
+            rollupOptions: {
+            // 2. serialport를 external로 지정
+            // 이렇게 하면 Vite가 serialport를 번들링하지 않고
+            // require('serialport') 코드를 그대로 둡니다.
+            external: ['serialport'],
+            },
           },
+          
         },
       },
       {
@@ -34,6 +41,19 @@ export default defineConfig({
           },
         },
       },
+      {
+        // Preload 스크립트 진입점
+        entry: 'electron/lib/serial_lib.ts',
+        onstart(options) {
+          // preload 스크립트 빌드 완료 시 렌더러 리로드
+          options.reload();
+        },
+        vite: {
+          build: {
+            outDir: 'dist/electron/lib/serial_lib', // 출력 경로 수정
+          },
+        },
+      },
     ]),
     renderer(),
   ],
@@ -45,3 +65,5 @@ export default defineConfig({
   // 프로덕션 빌드 시 Electron이 파일을 찾을 수 있도록 base 경로 수정
   base: './',
 });
+
+

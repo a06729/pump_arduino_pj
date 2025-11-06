@@ -14,7 +14,7 @@ const port = new SerialPort({
     autoOpen: false
 });
 
-const delimiter = Buffer.from('\r', 'utf8');
+const delimiter = Buffer.from('\n', 'utf8');
 const parser = port.pipe(new DelimiterParser({ delimiter: delimiter }));
 
 // 수신된 모든 바이트를 출력
@@ -22,11 +22,11 @@ parser.on('data', (data) => {
     console.log('\n--- 데이터 수신 ---');
     console.log('길이:', data.length, '바이트');
     
-    // HEX 출력
-    //console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g).join(' '));
+    //HEX 출력
+    console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g).join(' '));
     
-    // 바이너리 출력  
-    //console.log('BIN: ', Array.from(data).map(b => b.toString(2).padStart(8, '0')).join(' '));
+    //바이너리 출력  
+    console.log('BIN: ', Array.from(data).map(b => b.toString(2).padStart(8, '0')).join(' '));
     
     // ASCII 출력 (제어 문자 표시)
     let asciiStr = '';
@@ -106,8 +106,17 @@ function startManualInput() {
             process.exit();
         }
         
-        console.log(`[송신] "${input}"`);
-        port.write(input + '\r');
+        const byteArray = [
+            0x24, 0x01, 0x57, 0x05, 0xAA, 0x07, 0x0A, // 첫 번째 시퀀스
+        ];
+        const dataToSend = Buffer.from(byteArray);
+        // console.log(`[송신] "${dataToSend}"`);
+        port.write(dataToSend, (err) => {
+        if (err) {
+            return console.error('[Write Error] 전송 실패:', err.message);
+        }
+        console.log('[Write Success] 데이터 전송 성공:', dataToSend);
+        });
         rl.prompt();
     });
 }

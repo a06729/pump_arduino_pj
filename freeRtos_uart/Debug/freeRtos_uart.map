@@ -941,9 +941,9 @@ END GROUP
                                 0x6bb (size before relaxing)
  .debug_str     0x00000a6c      0x788 FreeRTOS/tasks.o
                                 0xbf5 (size before relaxing)
- .debug_str     0x000011f4      0x103 main.o
-                                0x2cc (size before relaxing)
- .debug_str     0x000012f7       0x34 motor.o
+ .debug_str     0x000011f4       0xbd main.o
+                                0x2bd (size before relaxing)
+ .debug_str     0x000012b1       0x7a motor.o
                                 0x1b6 (size before relaxing)
  .debug_str     0x0000132b       0xa2 protocol.o
                                 0x224 (size before relaxing)

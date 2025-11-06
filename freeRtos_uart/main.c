@@ -1,3 +1,6 @@
+
+#define F_CPU 16000000UL
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -50,6 +53,7 @@ void vProtocolTask(void *pvParameters) {
     enum { STATE_IDLE, STATE_RECEIVING } state = STATE_IDLE;
 
     while (1) {
+
         // 1. FreeRTOS 큐에서 데이터 수신 (무기한 대기)
         if (xQueueReceive(xUartQueue, &received_char, portMAX_DELAY) == pdPASS) {
             
@@ -91,6 +95,8 @@ int main(void) {
 	motor_init();
 	timer0_init();
     
+
+	
     // 큐 생성: 64개의 8비트(uint8_t) 요소를 저장
     // 수신 버퍼링을 위해 넉넉하게 설정
     xUartQueue = xQueueCreate(64, sizeof(uint8_t));
@@ -102,7 +108,7 @@ int main(void) {
         xTaskCreate(
             vRxTask,
             "RxTask",
-            configMINIMAL_STACK_SIZE,
+            configMINIMAL_STACK_SIZE + 100,
             NULL,
             tskIDLE_PRIORITY + 2,
             NULL
