@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { Button } from "@/components/ui/button"
+import SerialCommunicationUI from './ui';
 
 // 전역 Window 인터페이스에 'myAPI' 타입을 추가합니다.
 export interface myApi {
@@ -27,11 +27,7 @@ function App() {
 
   return (
     <>
-      <div>
-        <div className="flex min-h-svh flex-col items-center justify-center">
-          <Button onClick={()=>{buttonHandler()}}>Click me {count}</Button>
-        </div>
-      </div>
+      <SerialCommunicationUI />
     </>
   )
 }

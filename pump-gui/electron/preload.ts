@@ -5,4 +5,11 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('myAPI', {
   // 예시: 메인 프로세스로 메시지 보내기
   sendMessage: (message: string) => ipcRenderer.send('some-channel', message),
+
+  getSerialPorts:()=> ipcRenderer.invoke('getSerialPorts'),
+
+  connectPorts:(portName:string)=> ipcRenderer.invoke('connectPorts',portName),
+
+  closePort:()=> ipcRenderer.invoke('closePort'),
+
 });

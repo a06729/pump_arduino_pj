@@ -1,38 +1,13 @@
 // electron/main.ts
-import { app, BrowserWindow ,ipcMain} from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
-import {port,parser} from "./lib/serial_lib";
-import { SerialPort ,DelimiterParser } from "serialport";
+import { createPort } from "./lib/serial_lib";
+import { SerialPort, DelimiterParser } from "serialport";
 
+const delimiter = Buffer.from('\n', 'utf8');
+let g_port: SerialPort | null = null;
+let g_parser: DelimiterParser | null = null;
 
-  // 포트 열기
-port.open((err) => {
-      if (err) {
-          console.error('포트 열기 실패:', err.message);
-          
-          // 사용 가능한 포트 목록 출력
-          SerialPort.list().then(ports => {
-              console.log('\n사용 가능한 포트:');
-              ports.forEach((p, i) => {
-                  console.log(`${i+1}. ${p.path}${p.manufacturer ? ` (${p.manufacturer})` : ''}`);
-              });
-          });
-          return;
-      }
-      
-      console.log('포트 연결 성공! 데이터를 기다리는 중...');
-});
-
-// 에러 처리
-port.on('error', (err) => {
-    console.error('포트 에러:', err.message);
-});
-
-port.on('close', () => {
-    console.log('포트가 닫혔습니다.');
-});
-
-// Vite 개발 서버 URL 또는 프로덕션 빌드 경로
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
 function createWindow() {
@@ -40,66 +15,160 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, '../preload/preload.js'), // preload 스크립트 경로
+      preload: path.join(__dirname, '../preload/preload.js'),
     },
   });
 
   if (VITE_DEV_SERVER_URL) {
-    // 개발 중일 때 Vite 개발 서버 로드
     win.loadURL(VITE_DEV_SERVER_URL);
-    // 개발자 도구 열기
     win.webContents.openDevTools();
   } else {
-    // 프로덕션 빌드일 때 index.html 로드
     win.loadFile(path.join(__dirname, '../../index.html'));
     win.webContents.openDevTools();
-
   }
 }
 
-ipcMain.on('some-channel', (event, message) => {
-    console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message}"`);
-    
-      const byteArray = [
-          0x24, 0x01, 0x57, 0x05, 0xAA, 0x07, 0x0A, // 첫 번째 시퀀스
-      ];
-      const dataToSend = Buffer.from(byteArray);
-      // console.log(`[송신] "${dataToSend}"`);
-      port.write(dataToSend, (err) => {
-      if (err) {
-          return console.error('[Write Error] 전송 실패:', err.message);
-      }
-      console.log('[Write Success] 데이터 전송 성공:', dataToSend);
-      });
+// parser 이벤트 리스너 설정 함수
+function setupParserListeners() {
+  if (!g_parser) return;
 
-    // (선택 사항) 메시지를 보낸 창으로 다시 응답을 보낼 수도 있습니다.
-    // event.reply('reply-channel', '메시지 잘 받았습니다!');
-});
-
-
-parser.on('data', (data) => {
+  g_parser.on('data', (data) => {
     console.log('\n--- 데이터 수신 ---');
     console.log('길이:', data.length, '바이트');
     
     // HEX 출력
-    console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g).join(' '));
+    console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g)?.join(' '));
     
     console.log('-------------------\n');
+  });
+}
+
+// 포트 이벤트 리스너 설정 함수
+function setupPortListeners() {
+  if (!g_port) return;
+
+  g_port.on('error', (err) => {
+    console.error('포트 에러:', err.message);
+  });
+
+  g_port.on('close', () => {
+    console.log('포트가 닫혔습니다.');
+    g_port = null;
+    g_parser = null;
+  });
+}
+
+ipcMain.handle('connectPorts', async (event, portName: string) => {
+  try {
+    // 이미 포트가 열려있는 경우
+    if (g_port && g_port.isOpen) {
+      console.log('포트가 이미 열려 있습니다:', portName);
+      return { success: true, message: '이미 연결됨' };
+    }
+
+    console.log('포트를 엽니다:', portName);
+    const port = createPort(portName);
+
+    // 포트 열기를 Promise로 처리
+    await new Promise<void>((resolve, reject) => {
+      port.open((err) => {
+        if (err) {
+          console.error('포트 열기 실패:', err.message);
+          reject(err);
+          return;
+        }
+        console.log('포트 연결 성공! 데이터를 기다리는 중...');
+        resolve();
+      });
+    });
+
+    // 전역 변수에 할당
+    g_port = port;
+    
+    // Parser 설정
+    g_parser = g_port.pipe(new DelimiterParser({ delimiter: delimiter }));
+    
+    // 이벤트 리스너 설정
+    setupPortListeners();
+    setupParserListeners();
+
+    return { success: true, message: '연결 성공' };
+
+  } catch (error) {
+    console.error('connectPorts 에러:', error);
+    return { success: false, message: (error as Error).message };
+  }
 });
 
+ipcMain.handle('getSerialPorts', async () => {
+  const port_list: { path: string; manufacturer?: string }[] = [];
+  
+  try {
+    const port_response = await SerialPort.list();
+    port_response.forEach((p) => {
+      port_list.push({
+        path: p.path,
+        manufacturer: p.manufacturer,
+      });
+    });
+    return port_list;
+  } catch (error) {
+    console.error('getSerialPorts 에러:', error);
+    return [];
+  }
+});
 
-app.whenReady().then(()=>{
+ipcMain.on('some-channel', (event, message) => {
+  console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message}"`);
+  
+  if (!g_port || !g_port.isOpen) {
+    console.error('[Write Error] 포트가 열려있지 않습니다.');
+    return;
+  }
+
+  const byteArray = [
+    0x24, 0x01, 0x57, 0x05, 0xAA, 0x07, 0x0A,
+  ];
+  const dataToSend = Buffer.from(byteArray);
+  
+  g_port.write(dataToSend, (err) => {
+    if (err) {
+      return console.error('[Write Error] 전송 실패:', err.message);
+    }
+    console.log('[Write Success] 데이터 전송 성공:', dataToSend);
+  });
+});
+
+// 포트 닫기 핸들러 추가
+ipcMain.handle('closePort', async () => {
+  if (g_port && g_port.isOpen) {
+    return new Promise<void>((resolve) => {
+      g_port!.close((err) => {
+        if (err) {
+          console.error('포트 닫기 실패:', err.message);
+        } else {
+          console.log('포트를 정상적으로 닫았습니다.');
+        }
+        g_port = null;
+        g_parser = null;
+        resolve();
+      });
+    });
+  }
+});
+
+app.whenReady().then(() => {
   createWindow();
 });
 
-
-
 app.on('window-all-closed', () => {
+  if (g_port && g_port.isOpen) {
+    g_port.close();
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
   }
-  port.close();
-
 });
 
 app.on('activate', () => {
