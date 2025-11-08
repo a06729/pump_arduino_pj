@@ -13,4 +13,4 @@
 void motor_init();
 
 //첫번째 유량모터 구동시키는 함수
-void motor_W1();
+void motor_W1(uint8_t data);

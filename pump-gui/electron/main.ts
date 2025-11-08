@@ -10,6 +10,14 @@ let g_parser: DelimiterParser | null = null;
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
+function calculate_checksum(buffer_arr:number[],length:number){
+  let sum=0;
+  for(let i=1; i<length; i++){
+    sum+=buffer_arr[i];
+  }
+  return sum;
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 800,
@@ -33,11 +41,25 @@ function setupParserListeners() {
   if (!g_parser) return;
 
   g_parser.on('data', (data) => {
-    console.log('\n--- 데이터 수신 ---');
-    console.log('길이:', data.length, '바이트');
+// 1. Array.from()을 사용해 Array<number>로 변환
+    const byteArray: number[] = Array.from(data);
     
-    // HEX 출력
+    // 2. Uint8Array 자체로 사용 (가장 효율적)
+    const uint8Array: Uint8Array = data;
+
+    console.log('\n--- 데이터 수신 ---');
+    
+    // HEX 출력은 그대로 유지
     console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g)?.join(' '));
+    for(let i=0; i<data.length; i++){
+      // Uint8Array의 개별 바이트 접근 (예: 첫 번째 바이트)
+      //console.log(`${uint8Array[i].toString(16).toUpperCase().padStart(2, '0')}`);
+      console.log(`${i} 번째 바이트: 0x${uint8Array[i].toString(16).toUpperCase().padStart(2, '0')}`);
+    }    
+
+    
+    // 수신된 배열을 체크섬 함수에 바로 사용할 수 있습니다.
+    // calculate_checksum(byteArray, byteArray.length); 
     
     console.log('-------------------\n');
   });
@@ -58,6 +80,7 @@ function setupPortListeners() {
   });
 }
 
+// react에서 시리얼 포트 연결 이벤트 발생시 실행 되는 함수
 ipcMain.handle('connectPorts', async (event, portName: string) => {
   try {
     // 이미 포트가 열려있는 경우
@@ -119,6 +142,7 @@ ipcMain.handle('getSerialPorts', async () => {
 });
 
 ipcMain.on('some-channel', (event, message) => {
+  let byteArray:number[]=[];
   console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message}"`);
   
   if (!g_port || !g_port.isOpen) {
@@ -126,9 +150,16 @@ ipcMain.on('some-channel', (event, message) => {
     return;
   }
 
-  const byteArray = [
-    0x24, 0x01, 0x57, 0x05, 0xAA, 0x07, 0x0A,
-  ];
+  byteArray[0]=0x24; // $ 
+  byteArray[1]=0x01; // SlaveId 
+  byteArray[2]=0x57; // W  
+  byteArray[3]=0x05; // 주소
+  byteArray[4]=parseInt(message); // 쓰기값
+  //체크섬 연산 함수 결과값 저장
+  const checksum=calculate_checksum(byteArray,5);
+  byteArray[5]=checksum; // checkSum값
+  byteArray[6]=0x0A  // \n
+
   const dataToSend = Buffer.from(byteArray);
   
   g_port.write(dataToSend, (err) => {

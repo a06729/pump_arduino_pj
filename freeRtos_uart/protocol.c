@@ -109,6 +109,10 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 			if (addr < 16) { // 가상 레지스터 범위 확인
 				g_device_registers[addr] = data;
 			}
+			
+			motor_W1(data);
+
+			
 			// 'W' 명령에 대한 응답
 			send_response(slave_id, cmd, addr, data);
 			

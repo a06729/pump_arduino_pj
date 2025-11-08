@@ -7,15 +7,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wifi, WifiOff, Send, Trash2, Download, AlertCircle } from 'lucide-react';
 
+type portList={
+  path:string, //시리얼 포트 위치이름 ex)COM3
+  manufacturer:string //시리얼 포트 설명이름
+}
+
 interface myApi {
   sendMessage: (message: string) => void;
-  getSerialPorts:()=>string[];
+  getSerialPorts:()=>portList[];
   connectPorts:(poartName:string)=>boolean;
   closePort:()=>void;
 }
 
+
+
 declare global { interface Window { myAPI: myApi; } }
 
+//현재 시리얼 포트로 연결 할 수 있는 시리얼 포트 정보 가져오는 함수
 async function getSerialPorts(){
       const ports = await window.myAPI.getSerialPorts();
       console.log('사용 가능한 포트:', ports);
@@ -23,11 +31,20 @@ async function getSerialPorts(){
 }
 
 const SerialCommunicationUI: React.FC = () => {
-  const [portList,setPortList]=useState<any[]>([]);
+  //시리얼 포트 정보 satae 함수
+  const [portList,setPortList]=useState<portList[]>([]);
+  //시리얼 연결 ON OFF 체크하기 위한 satae
   const [isConnected, setIsConnected] = useState(false);
+  
+  //보트레이던트 설정
   const [baudRate, setBaudRate] = useState('9600');
+  
+  //시리얼 포트 설정
   const [selectedPort, setSelectedPort] = useState('COM3');
+  
+  //첫번째 모터값 State
   const [inputMoter_F, setInputMoter_F] = useState('');
+  //두번째 모터값 State
   const [inputMotor_S, setInputMoter_S] = useState('');
 
   const [error, setError] = useState('');
@@ -38,6 +55,8 @@ const SerialCommunicationUI: React.FC = () => {
           getSerialPorts().then((ports)=>{
             console.log('사용 가능한 포트:', ports);
             setPortList(ports);
+            setSelectedPort(ports[0].path);
+            console.log(`ports:${ports[0].path}`);
           });
         } else {
           // console.error('myAPI.sendMessage is not available on window object.');
@@ -70,6 +89,7 @@ const SerialCommunicationUI: React.FC = () => {
 
   };
 
+  //첫번째 모터에 값을 전송하기 위한 함수
   const send_Moter_F_Data = async () => {
     if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
       window.myAPI.sendMessage(inputMoter_F);
@@ -77,7 +97,8 @@ const SerialCommunicationUI: React.FC = () => {
     setInputMoter_F('');
     setError('');
   };
-
+  
+  // 두번째 모터에 값을 전송하기 위한 함수
   const send_Moter_S_Data = async () => {
     if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
       window.myAPI.sendMessage(inputMotor_S);

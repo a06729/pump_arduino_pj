@@ -102,7 +102,6 @@ int main(void) {
     xUartQueue = xQueueCreate(64, sizeof(uint8_t));
 
     if (xUartQueue != NULL) {
-		motor_W1();
 
         // Rx Task 생성 (높은 우선순위: 수신 데이터를 빠르게 링 버퍼에서 큐로 이동)
         xTaskCreate(
