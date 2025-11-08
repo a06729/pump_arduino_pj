@@ -16,8 +16,10 @@
 #include "FreeRTOS/task.h"
 #include "FreeRTOS/queue.h"
 
+
 // Task 간 통신을 위한 큐 핸들
 static QueueHandle_t xUartQueue = NULL;
+
 
 /**
  * @brief Rx Task: 수신 링 버퍼 -> FreeRTOS 큐 (원본 코드와 동일)
@@ -107,7 +109,7 @@ int main(void) {
         xTaskCreate(
             vRxTask,
             "RxTask",
-            configMINIMAL_STACK_SIZE + 100,
+            configMINIMAL_STACK_SIZE ,
             NULL,
             tskIDLE_PRIORITY + 2,
             NULL
@@ -122,7 +124,7 @@ int main(void) {
             tskIDLE_PRIORITY + 1,
             NULL
         );
-        
+        		
         // FreeRTOS 스케줄러 시작
         vTaskStartScheduler();
     }
