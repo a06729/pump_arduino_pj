@@ -5,27 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Wifi, WifiOff, Send, Trash2, Download, AlertCircle } from 'lucide-react';
-
-
-interface SerialMessage {
-  timestamp: Date;
-  type: 'sent' | 'received';
-  data: string;
-}
-
 
 interface myApi {
   sendMessage: (message: string) => void;
-  getSerialPorts:()=>void;
+  getSerialPorts:()=>string[];
   connectPorts:(poartName:string)=>boolean;
   closePort:()=>void;
 }
 
 declare global { interface Window { myAPI: myApi; } }
-
-
 
 async function getSerialPorts(){
       const ports = await window.myAPI.getSerialPorts();
@@ -38,14 +27,14 @@ const SerialCommunicationUI: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [baudRate, setBaudRate] = useState('9600');
   const [selectedPort, setSelectedPort] = useState('COM3');
-  const [messages, setMessages] = useState<SerialMessage[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [inputMoter_F, setInputMoter_F] = useState('');
+  const [inputMotor_S, setInputMoter_S] = useState('');
+
   const [error, setError] = useState('');
-  const [receivedData, setReceivedData] = useState('');
+
 
   useEffect(() => {
-
-        if (window.myAPI && window.myAPI.getSerialPorts) {
+        if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
           getSerialPorts().then((ports)=>{
             console.log('사용 가능한 포트:', ports);
             setPortList(ports);
@@ -55,6 +44,7 @@ const SerialCommunicationUI: React.FC = () => {
         }
   }, []);
 
+  //시리얼 연결 함수
   const connect = async () => {
 
     if (window.myAPI && window.myAPI.connectPorts) {
@@ -66,12 +56,9 @@ const SerialCommunicationUI: React.FC = () => {
       }
     }
 
-    // 더미 연결 - 항상 성공
-    setIsConnected(true);
-    setError('');
     console.log(`${selectedPort} 포트에 연결되었습니다 (Baud Rate: ${baudRate})`);
   };
-
+  //시리얼 포트 연결 해제 함수
   const disconnect = async () => {
     if (window.myAPI && window.myAPI.closePort) {
         await window.myAPI.closePort();
@@ -83,35 +70,20 @@ const SerialCommunicationUI: React.FC = () => {
 
   };
 
-  const sendData = async () => {
-    if (window.myAPI && window.myAPI.getSerialPorts) {
-      window.myAPI.sendMessage(inputText);
+  const send_Moter_F_Data = async () => {
+    if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
+      window.myAPI.sendMessage(inputMoter_F);
     }
-    setInputText('');
+    setInputMoter_F('');
     setError('');
   };
 
-  const clearMessages = () => {
-    setMessages([]);
-    setReceivedData('');
-  };
-
-  const downloadLog = () => {
-    const log = messages.map(msg => 
-      `[${msg.timestamp.toLocaleTimeString()}] ${msg.type === 'sent' ? '송신' : '수신'}: ${msg.data}`
-    ).join('\n');
-
-    const blob = new Blob([log], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `serial-log-${new Date().getTime()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ko-KR', { hour12: false });
+  const send_Moter_S_Data = async () => {
+    if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
+      window.myAPI.sendMessage(inputMotor_S);
+    }
+    setInputMoter_S('');
+    setError('');
   };
 
   return (
@@ -191,70 +163,37 @@ const SerialCommunicationUI: React.FC = () => {
             <CardDescription>시리얼 포트로 데이터 전송</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2">
-              <Input
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendData()}
-                placeholder="전송할 데이터 입력..."
-                disabled={!isConnected}
-              />
-              <Button onClick={sendData} disabled={!isConnected || !inputText}>
-                <Send className="mr-2 h-4 w-4" />
-                전송
-              </Button>
+            <div className="flex  justify-center">
+              <div className='flex gap-5 justify-center items-center mr-14'>
+                  <Input
+                    value={inputMoter_F}
+                    onChange={(e) => setInputMoter_F(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && send_Moter_F_Data()}
+                    placeholder="1모터 유량 값"
+                    disabled={!isConnected}
+                  />
+                  <Button onClick={send_Moter_F_Data} disabled={!isConnected || !inputMoter_F}>
+                      <Send className="mr-2 h-4 w-4" />
+                      <span>1번 모터 전송</span>
+                  </Button>
+              </div>
+              <div className='flex gap-5 justify-center items-center  mr-14 '>
+                  <Input
+                    value={inputMotor_S}
+                    onChange={(e) => setInputMoter_S(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && send_Moter_S_Data()}
+                    placeholder="2모터 유량 값"
+                    disabled={!isConnected}
+                  />
+                  <Button onClick={send_Moter_S_Data} disabled={!isConnected || !inputMotor_S}>
+                      <Send className="mr-2 h-4 w-4" />
+                      <span>2번 모터 전송</span>
+                  </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>데이터 모니터</CardTitle>
-                <CardDescription>송수신 데이터 로그</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={downloadLog} disabled={messages.length === 0}>
-                  <Download className="mr-2 h-4 w-4" />
-                  다운로드
-                </Button>
-                <Button variant="outline" size="sm" onClick={clearMessages} disabled={messages.length === 0}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  초기화
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="formatted" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="formatted">포맷 뷰</TabsTrigger>
-                <TabsTrigger value="raw">원본 데이터</TabsTrigger>
-              </TabsList>
-              <TabsContent value="formatted">
-                <div className="border rounded-lg p-4 h-96 overflow-y-auto bg-slate-950 font-mono text-sm">
-                  {messages.length === 0 ? (
-                    <div className="text-slate-500 text-center py-20">데이터가 없습니다</div>
-                  ) : (
-                    messages.map((msg, idx) => (
-                      <div key={idx} className={`mb-2 ${msg.type === 'sent' ? 'text-green-400' : 'text-blue-400'}`}>
-                        <span className="text-slate-500">[{formatTime(msg.timestamp)}]</span>
-                        <span className="mx-2">{msg.type === 'sent' ? '→' : '←'}</span>
-                        <span>{msg.data}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </TabsContent>
-              <TabsContent value="raw">
-                <div className="border rounded-lg p-4 h-96 overflow-y-auto bg-slate-950 text-green-400 font-mono text-sm whitespace-pre-wrap break-all">
-                  {receivedData || <div className="text-slate-500 text-center py-20">수신된 데이터가 없습니다</div>}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
