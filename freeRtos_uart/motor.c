@@ -14,7 +14,7 @@ void motor_init(){
 //모터 동작시키는 기능
 void motor_W1(uint8_t data){
    uint8_t target = data;
-   float flow_time = (target/Pump_Flow) * 1000;
+   double flow_time = (target/Pump_Flow) * 1000;
    
    PORTB |= (1<<PB0); 
    delay(flow_time);

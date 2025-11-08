@@ -93,7 +93,7 @@ uint32_t micros(void) {
 }
 
 // 딜레이 함수 (밀리초)
-void delay(float ms) {
+void delay(double ms) {
 	uint32_t start = millis();
 
 	while ((millis() - start) < ms) {
