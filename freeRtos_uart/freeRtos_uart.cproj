@@ -207,10 +207,16 @@
     <Compile Include="protocol.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="testFn.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="timer.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="timer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="testFn.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="uart.c">

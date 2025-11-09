@@ -12,5 +12,8 @@
 //모터 초기화 함수
 void motor_init();
 
+//led 테스트
+void LED_test(uint8_t delay_value);
+
 //첫번째 유량모터 구동시키는 함수
 void motor_W1(uint8_t data);

@@ -9,6 +9,13 @@
 
 #include "uart.h"
 #include "protocol.h"
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+#include "FreeRTOS/queue.h"
+
+
+extern QueueHandle_t xMoter1Queue;
+
 
 // 가상의 데이터 저장소 (Address 0x00 ~ 0x0F)
 uint8_t g_device_registers[16] = {0};
@@ -74,6 +81,9 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 		return; // 이 장치를 위한 패킷이 아님
 	}
 
+    const TickType_t xDelay = 10 / portTICK_PERIOD_MS;
+
+
 	// 3. 체크섬 확인
 	uint8_t cmd = buffer[FRAME_IDX_CMD];
 	uint8_t addr = buffer[FRAME_IDX_ADDR];
@@ -110,11 +120,16 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 				g_device_registers[addr] = data;
 			}
 			
-			motor_W1(data);
-
+			
+			// 데이터를 FreeRTOS 큐로 전송 (최대 10ms 대기)
+			
+			//motor_W1(data);
+			if (xQueueSendToBack(xMoter1Queue, &data,portMAX_DELAY) != pdPASS) {}
 			
 			// 'W' 명령에 대한 응답
 			send_response(slave_id, cmd, addr, data);
+			
+
 			
 			} else if (cmd == 'R') {
 			data = 0;
@@ -124,6 +139,7 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 			// 'R' 명령에 대한 응답
 			send_response(slave_id, cmd, addr, data);
 		}
+
 	}
 
 

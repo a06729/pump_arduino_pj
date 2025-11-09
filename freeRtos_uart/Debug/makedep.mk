@@ -26,5 +26,7 @@ protocol.c
 
 timer.c
 
+testFn.c
+
 uart.c
 

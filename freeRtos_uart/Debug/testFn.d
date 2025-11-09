@@ -1,4 +1,4 @@
-protocol.d protocol.o: .././protocol.c \
+testFn.d testFn.o: .././testFn.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -10,12 +10,7 @@ protocol.d protocol.o: .././protocol.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\version.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\fuse.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\lock.h \
- .././uart.h .././protocol.h .././FreeRTOS/FreeRTOS.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h \
- .././FreeRTOS/FreeRTOSConfig.h .././FreeRTOS/projdefs.h \
- .././FreeRTOS/portable.h .././FreeRTOS/deprecated_definitions.h \
- .././FreeRTOS/portmacro.h .././FreeRTOS/mpu_wrappers.h \
- .././FreeRTOS/task.h .././FreeRTOS/list.h .././FreeRTOS/queue.h
+ .././testFn.h
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -39,28 +34,4 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\lock.h:
 
-.././uart.h:
-
-.././protocol.h:
-
-.././FreeRTOS/FreeRTOS.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h:
-
-.././FreeRTOS/FreeRTOSConfig.h:
-
-.././FreeRTOS/projdefs.h:
-
-.././FreeRTOS/portable.h:
-
-.././FreeRTOS/deprecated_definitions.h:
-
-.././FreeRTOS/portmacro.h:
-
-.././FreeRTOS/mpu_wrappers.h:
-
-.././FreeRTOS/task.h:
-
-.././FreeRTOS/list.h:
-
-.././FreeRTOS/queue.h:
+.././testFn.h:

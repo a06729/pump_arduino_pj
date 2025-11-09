@@ -50,6 +50,7 @@ C_SRCS +=  \
 ../motor.c \
 ../protocol.c \
 ../timer.c \
+../testFn.c \
 ../uart.c
 
 
@@ -72,6 +73,7 @@ main.o \
 motor.o \
 protocol.o \
 timer.o \
+testFn.o \
 uart.o
 
 OBJS_AS_ARGS +=  \
@@ -87,6 +89,7 @@ main.o \
 motor.o \
 protocol.o \
 timer.o \
+testFn.o \
 uart.o
 
 C_DEPS +=  \
@@ -102,6 +105,7 @@ main.d \
 motor.d \
 protocol.d \
 timer.d \
+testFn.d \
 uart.d
 
 C_DEPS_AS_ARGS +=  \
@@ -117,6 +121,7 @@ main.d \
 motor.d \
 protocol.d \
 timer.d \
+testFn.d \
 uart.d
 
 OUTPUT_FILE_PATH +=freeRtos_uart.elf
@@ -211,6 +216,13 @@ FreeRTOS/timers.o: ../FreeRTOS/timers.c
 	
 
 ./timer.o: .././timer.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\include"  -Og -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=atmega328p -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\gcc\dev\atmega328p" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./testFn.o: .././testFn.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\include"  -Og -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=atmega328p -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\gcc\dev\atmega328p" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
