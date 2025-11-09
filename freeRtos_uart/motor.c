@@ -8,8 +8,6 @@
 const float Pump_Flow=3.57;
 
 
-
-
 void motor_init(){
 	PIN8_DDR |=PIN8_BIT;
 	PIN9_DDR |= PIN9_BIT;

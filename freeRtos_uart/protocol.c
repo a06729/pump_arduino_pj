@@ -14,6 +14,8 @@
 #include "FreeRTOS/queue.h"
 
 
+
+//main.c 파일에 있는 xMoter1Queue을 가져오기위한 전역변수
 extern QueueHandle_t xMoter1Queue;
 
 
@@ -121,9 +123,11 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 			}
 			
 			
-			// 데이터를 FreeRTOS 큐로 전송 (최대 10ms 대기)
 			
 			//motor_W1(data);
+			
+			//xMoter1Queue 큐로 전송하고 현재 코드 위치로 돌아오기위한 기능
+			//xQueueSendToBack 에서 도착지는 main.c에 있는 vMoter1Task에 있는 xQueueReceive가 도착지
 			if (xQueueSendToBack(xMoter1Queue, &data,portMAX_DELAY) != pdPASS) {}
 			
 			// 'W' 명령에 대한 응답

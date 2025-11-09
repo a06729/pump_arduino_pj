@@ -26,7 +26,7 @@ QueueHandle_t xMoter1Queue = NULL;
 QueueHandle_t xMoter2Queue = NULL;
 
 
-
+//모터1 제어를위한 Task 구현
 void vMoter1Task(void *pvParameters){
 	uint8_t ml_data;
 	while(1){
