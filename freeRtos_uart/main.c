@@ -32,7 +32,8 @@ void vMoter1Task(void *pvParameters){
 	while(1){
 		if(xQueueReceive(xMoter1Queue,&ml_data,portMAX_DELAY)==pdPASS){
 			//여기에 모터 함수 집어넣으면 된다
-			LED_test(ml_data);
+			//LED_test(ml_data);
+			motor_W1(ml_data);
 		}
 	}
 }

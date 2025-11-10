@@ -4,8 +4,10 @@
 #include "timer.h"
 #include <util/delay.h>
 
+
+//공식 100/28047ms
 //28047ms 모터의 유량 흐름 값
-const float Pump_Flow=3.57;
+const float Pump_Flow=3.22;
 
 
 void motor_init(){
@@ -15,7 +17,7 @@ void motor_init(){
 //모터 동작시키는 기능
 void motor_W1(uint8_t data){
    uint8_t target = data;
-   double flow_time = (target/Pump_Flow) * 1000;
+   float flow_time = (target/Pump_Flow) * 1000;
    
    PORTB |= (1<<PB0); 
    delay(flow_time);
