@@ -18,6 +18,9 @@
 //main.c 파일에 있는 xMoter1Queue을 가져오기위한 전역변수
 extern QueueHandle_t xMoter1Queue;
 
+extern QueueHandle_t xMoter2Queue;
+
+
 
 // 가상의 데이터 저장소 (Address 0x00 ~ 0x0F)
 uint8_t g_device_registers[16] = {0};
@@ -123,13 +126,19 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 			}
 			
 			
+			if(addr==1){
+				if (xQueueSendToBack(xMoter1Queue, &data,portMAX_DELAY) != pdPASS) {}
+			}else if(addr==2){
+				if (xQueueSendToBack(xMoter2Queue, &data,portMAX_DELAY) != pdPASS) {}
+			}
 			
-			//motor_W1(data);
-						
+									
 			// 'W' 명령에 대한 응답
 			//xMoter1Queue 큐로 전송하고 현재 코드 위치로 돌아오기위한 기능
 			//xQueueSendToBack 에서 도착지는 main.c에 있는 vMoter1Task에 있는 xQueueReceive가 도착지
-			if (xQueueSendToBack(xMoter1Queue, &data,portMAX_DELAY) != pdPASS) {}
+			//if (xQueueSendToBack(xMoter1Queue, &data,portMAX_DELAY) != pdPASS) {}
+			
+			//if (xQueueSendToBack(xMoter2Queue, &data,portMAX_DELAY) != pdPASS) {}
 			
 			send_response(slave_id, cmd, addr, data);
 

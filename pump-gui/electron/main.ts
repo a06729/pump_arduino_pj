@@ -4,6 +4,13 @@ import path from 'path';
 import { createPort } from "./lib/serial_lib";
 import { SerialPort, DelimiterParser } from "serialport";
 
+
+type moter_type={
+  id:number,
+  moter_value:string
+}
+
+
 const delimiter = Buffer.from('\n', 'utf8');
 let g_port: SerialPort | null = null;
 let g_parser: DelimiterParser | null = null;
@@ -141,24 +148,49 @@ ipcMain.handle('getSerialPorts', async () => {
   }
 });
 
-ipcMain.on('some-channel', (event, message) => {
+ipcMain.on('some-channel', (event, message:moter_type) => {
   let byteArray:number[]=[];
-  console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message}"`);
+  console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message.moter_value}"`);
   
   if (!g_port || !g_port.isOpen) {
     console.error('[Write Error] 포트가 열려있지 않습니다.');
     return;
   }
 
-  byteArray[0]=0x24; // $ 
-  byteArray[1]=0x01; // SlaveId 
-  byteArray[2]=0x57; // W  
-  byteArray[3]=0x05; // 주소
-  byteArray[4]=parseInt(message); // 쓰기값
-  //체크섬 연산 함수 결과값 저장
-  const checksum=calculate_checksum(byteArray,5);
-  byteArray[5]=checksum; // checkSum값
-  byteArray[6]=0x0A  // \n
+  if(message.id==1){
+    
+      byteArray[0]=0x24; // $ 
+      byteArray[1]=0x01; // SlaveId 
+      byteArray[2]=0x57; // W  
+      byteArray[3]=0x01; // 주소
+      byteArray[4]=parseInt(message.moter_value); // 쓰기값
+      //체크섬 연산 함수 결과값 저장
+      const checksum=calculate_checksum(byteArray,5);
+      byteArray[5]=checksum; // checkSum값
+      byteArray[6]=0x0A  // \n
+
+  }else if(message.id==2){
+      
+    byteArray[0]=0x24; // $ 
+      byteArray[1]=0x01; // SlaveId 
+      byteArray[2]=0x57; // W  
+      byteArray[3]=0x02; // 주소
+      byteArray[4]=parseInt(message.moter_value); // 쓰기값
+      //체크섬 연산 함수 결과값 저장
+      const checksum=calculate_checksum(byteArray,5);
+      byteArray[5]=checksum; // checkSum값
+      byteArray[6]=0x0A  // \n
+  }
+
+  // byteArray[0]=0x24; // $ 
+  // byteArray[1]=0x01; // SlaveId 
+  // byteArray[2]=0x57; // W  
+  // byteArray[3]=0x01; // 주소
+  // byteArray[4]=parseInt(message); // 쓰기값
+  // //체크섬 연산 함수 결과값 저장
+  // const checksum=calculate_checksum(byteArray,5);
+  // byteArray[5]=checksum; // checkSum값
+  // byteArray[6]=0x0A  // \n
 
   const dataToSend = Buffer.from(byteArray);
   

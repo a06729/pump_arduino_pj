@@ -38,6 +38,17 @@ void vMoter1Task(void *pvParameters){
 	}
 }
 
+void vMoter2Task(void *pvParameters){
+	uint8_t ml_data;
+	while(1){
+		if(xQueueReceive(xMoter2Queue,&ml_data,portMAX_DELAY)==pdPASS){
+			//여기에 모터 함수 집어넣으면 된다
+			//LED_test(ml_data);
+			motor_W2(ml_data);
+		}
+	}
+}
+
 /**
  * @brief Rx Task: 수신 링 버퍼 -> FreeRTOS 큐
  * ISR의 링 버퍼에서 바이트를 가져와 처리 태스크용 큐로 전송합니다.
@@ -122,6 +133,9 @@ int main(void) {
 	
 	xMoter1Queue = xQueueCreate(16, sizeof(uint8_t));
 	
+	xMoter2Queue = xQueueCreate(16, sizeof(uint8_t));
+
+	
     if (xUartQueue != NULL && xMoter1Queue != NULL) {
 
         // Rx Task 생성 (높은 우선순위: 수신 데이터를 빠르게 링 버퍼에서 큐로 이동)
@@ -154,6 +168,17 @@ int main(void) {
 			tskIDLE_PRIORITY,
 			NULL
 		);
+		
+		
+		xTaskCreate(
+			vMoter2Task,
+			"Moter2Task",
+			configMINIMAL_STACK_SIZE ,
+			NULL,
+			tskIDLE_PRIORITY,
+			NULL
+		);
+		
 		
         // FreeRTOS 스케줄러 시작
         vTaskStartScheduler();

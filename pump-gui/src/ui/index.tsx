@@ -5,7 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wifi, WifiOff, Send, Trash2, Download, AlertCircle } from 'lucide-react';
+import { Wifi, WifiOff, Send, AlertCircle } from 'lucide-react';
+
+
+type moter_type={
+  id:number,
+  moter_value:string
+}
 
 type portList={
   path:string, //시리얼 포트 위치이름 ex)COM3
@@ -13,7 +19,7 @@ type portList={
 }
 
 interface myApi {
-  sendMessage: (message: string) => void;
+  sendMessage: (message: moter_type) => void;
   getSerialPorts:()=>portList[];
   connectPorts:(poartName:string)=>boolean;
   closePort:()=>void;
@@ -92,7 +98,11 @@ const SerialCommunicationUI: React.FC = () => {
   //첫번째 모터에 값을 전송하기 위한 함수
   const send_Moter_F_Data = async () => {
     if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
-      window.myAPI.sendMessage(inputMoter_F);
+      const data:moter_type={
+        id: 1,
+        moter_value:inputMoter_F
+      };
+      window.myAPI.sendMessage(data);
     }
     setInputMoter_F('');
     setError('');
@@ -101,7 +111,11 @@ const SerialCommunicationUI: React.FC = () => {
   // 두번째 모터에 값을 전송하기 위한 함수
   const send_Moter_S_Data = async () => {
     if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
-      window.myAPI.sendMessage(inputMotor_S);
+      const data:moter_type={
+        id: 2,
+        moter_value:inputMotor_S
+      };
+      window.myAPI.sendMessage(data);
     }
     setInputMoter_S('');
     setError('');
