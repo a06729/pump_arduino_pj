@@ -4,8 +4,8 @@ import { SerialPort ,DelimiterParser } from "serialport";
 const portName = 'COM3'; // Windows: COM3, Linux: /dev/ttyUSB0
 const baudRate = 9600;
 
-console.log('=== 간단한 시리얼 수신 테스트 ===');
-console.log(`포트: ${portName}, 보드레이트: ${baudRate}\n`);
+// console.log('=== 간단한 시리얼 수신 테스트 ===');
+// console.log(`포트: ${portName}, 보드레이트: ${baudRate}\n`);
 
 // 시리얼 포트 생성 (최소 설정)
 

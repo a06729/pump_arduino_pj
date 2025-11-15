@@ -17,21 +17,30 @@ void motor_init(){
 	PIN9_DDR |= PIN9_BIT;
 }
 
-//모터 동작시키는 기능
-void motor_W1(uint8_t data){
-   uint8_t target = data;
+//모터1 동작시키는 기능
+void motor_W1(uint32_t data){
+   uint32_t target = data;
    float flow_time = (target/Pump_Flow) * 1000;
-   
+ 
    PORTB |= (1<<PB0); 
    delay(flow_time);
    PORTB &= ~(1<<PB0);
 }
 
-//모터 동작시키는 기능
-void motor_W2(uint8_t data){
-	uint8_t target = data;
+//모터2 동작시키는 기능
+void motor_W2(uint32_t data){
+	
+	uint32_t target = data;
 	float flow_time = (target/Pump_Flow_Second) * 1000;
 	PORTB |= (1<<PB1);
 	delay(flow_time);
+	PORTB &= ~(1<<PB1);
+}
+
+//모터 2개 정지
+void all_stop_motor(){
+	//모터1 정지
+	PORTB &= ~(1<<PB0);
+	//모터2 정지
 	PORTB &= ~(1<<PB1);
 }

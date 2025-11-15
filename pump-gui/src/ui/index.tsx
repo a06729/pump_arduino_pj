@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wifi, WifiOff, Send, AlertCircle } from 'lucide-react';
+import { Wifi, WifiOff, Send, AlertCircle,StopCircleIcon } from 'lucide-react';
 
 
 type moter_type={
@@ -22,6 +22,7 @@ interface myApi {
   sendMessage: (message: moter_type) => void;
   getSerialPorts:()=>portList[];
   connectPorts:(poartName:string)=>boolean;
+  all_stop_motor:()=>void;
   closePort:()=>void;
 }
 
@@ -120,6 +121,13 @@ const SerialCommunicationUI: React.FC = () => {
     setInputMoter_S('');
     setError('');
   };
+
+  const all_stop_motor=async()=>{
+    console.log("긴급정지");
+    if (window.myAPI && window.myAPI.all_stop_motor!=undefined) {
+      await window.myAPI.all_stop_motor();
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
@@ -223,6 +231,14 @@ const SerialCommunicationUI: React.FC = () => {
                   <Button onClick={send_Moter_S_Data} disabled={!isConnected || !inputMotor_S}>
                       <Send className="mr-2 h-4 w-4" />
                       <span>2번 모터 전송</span>
+                  </Button>
+              </div>
+            </div>
+            <div className='flex  justify-center mt-10'>
+              <div className='flex gap-5 justify-center items-center  mr-14 '>
+                  <Button className='bg-red-500' onClick={all_stop_motor}>
+                      <StopCircleIcon className="mr-2 h-4 w-4" />
+                      <span>긴급정지</span>
                   </Button>
               </div>
             </div>

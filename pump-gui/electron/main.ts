@@ -3,13 +3,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { createPort } from "./lib/serial_lib";
 import { SerialPort, DelimiterParser } from "serialport";
-
-
-type moter_type={
-  id:number,
-  moter_value:string
-}
-
+import {moter_type,fun_enum} from "./type/main_type"
 
 const delimiter = Buffer.from('\n', 'utf8');
 let g_port: SerialPort | null = null;
@@ -17,12 +11,14 @@ let g_parser: DelimiterParser | null = null;
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
-function calculate_checksum(buffer_arr:number[],length:number){
-  let sum=0;
-  for(let i=1; i<length; i++){
-    sum+=buffer_arr[i];
-  }
-  return sum;
+//시리얼 통신에 체크섬을 계산하기 위한 함수
+function calculate_checksum(buffer: number[]): number {
+    let sum = 0;
+    // buffer는 ID, Cmd, Addr, D0, D1, D2, D3를 포함해야 합니다.
+    for (let i = 0; i < buffer.length; i++) {
+        sum += buffer[i];
+    }
+    return sum & 0xFF; // 8비트 오버플로우(하위 1바이트)만 반환
 }
 
 function createWindow() {
@@ -148,58 +144,109 @@ ipcMain.handle('getSerialPorts', async () => {
   }
 });
 
-ipcMain.on('some-channel', (event, message:moter_type) => {
-  let byteArray:number[]=[];
-  console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message.moter_value}"`);
-  
-  if (!g_port || !g_port.isOpen) {
-    console.error('[Write Error] 포트가 열려있지 않습니다.');
-    return;
-  }
+ipcMain.on('all-stop-motor', (event, message) => {
+    let byteArray:number[]=[];
 
-  if(message.id==1){
-    
-      byteArray[0]=0x24; // $ 
-      byteArray[1]=0x01; // SlaveId 
-      byteArray[2]=0x57; // W  
-      byteArray[3]=0x01; // 주소
-      byteArray[4]=parseInt(message.moter_value); // 쓰기값
-      //체크섬 연산 함수 결과값 저장
-      const checksum=calculate_checksum(byteArray,5);
-      byteArray[5]=checksum; // checkSum값
-      byteArray[6]=0x0A  // \n
-
-  }else if(message.id==2){
-      
-    byteArray[0]=0x24; // $ 
-      byteArray[1]=0x01; // SlaveId 
-      byteArray[2]=0x57; // W  
-      byteArray[3]=0x02; // 주소
-      byteArray[4]=parseInt(message.moter_value); // 쓰기값
-      //체크섬 연산 함수 결과값 저장
-      const checksum=calculate_checksum(byteArray,5);
-      byteArray[5]=checksum; // checkSum값
-      byteArray[6]=0x0A  // \n
-  }
-
-  // byteArray[0]=0x24; // $ 
-  // byteArray[1]=0x01; // SlaveId 
-  // byteArray[2]=0x57; // W  
-  // byteArray[3]=0x01; // 주소
-  // byteArray[4]=parseInt(message); // 쓰기값
-  // //체크섬 연산 함수 결과값 저장
-  // const checksum=calculate_checksum(byteArray,5);
-  // byteArray[5]=checksum; // checkSum값
-  // byteArray[6]=0x0A  // \n
-
-  const dataToSend = Buffer.from(byteArray);
-  
-  g_port.write(dataToSend, (err) => {
-    if (err) {
-      return console.error('[Write Error] 전송 실패:', err.message);
+    if (!g_port || !g_port.isOpen) {
+        console.error('[Write Error] 포트가 열려있지 않습니다.');
+        return;
     }
-    console.log('[Write Success] 데이터 전송 성공:', dataToSend);
-  });
+
+    byteArray[0]=0x24; // $ 
+    byteArray[1]=0x01; // SlaveId 
+    byteArray[2]=0x57; // W
+    byteArray[3]=0x03; // 주소 3 
+    
+    const dumyInt = 0;
+
+    const d0 = (dumyInt >> 24) & 0xFF; // Data_0 (MSB) (예: 0x00)
+    const d1 = (dumyInt >> 16) & 0xFF; // Data_1      (예: 0x00)
+    const d2 = (dumyInt >> 8)  & 0xFF; // Data_2      (예: 0x01)
+    const d3 = dumyInt & 0xFF;        // Data_3 (LSB) (예: 0x04)
+
+    const dataToSum = byteArray.slice(1, 8); // index 1부터 8 직전(7)까지
+    const checksum = calculate_checksum(dataToSum);
+
+    // 6. 체크섬 및 종료 문자 추가
+    byteArray[8]=checksum; // checkSum값 (예: 260 전송 시 0x5E)
+    byteArray[9]=0x0A;   // \n
+
+    const dataToSend = Buffer.from(byteArray);
+    
+    g_port.write(dataToSend, (err) => {
+        if (err) {
+            return console.error('[Write Error] 전송 실패:', err.message);
+        }
+        console.log('[Write Success] 데이터 전송 성공:', dataToSend);
+    });
+ 
+});
+
+ipcMain.on('cmd-channel', (event, message:moter_type) => {
+    let byteArray:number[]=[];
+    console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message.moter_value}"`);
+    
+    if (!g_port || !g_port.isOpen) {
+        console.error('[Write Error] 포트가 열려있지 않습니다.');
+        return;
+    }
+
+    // 1. 렌더러에서 받은 문자열 값을 정수로 변환
+    const moterValueInt = parseInt(message.moter_value);
+    if (isNaN(moterValueInt)) {
+        console.error('[Write Error] 유효하지 않은 숫자 값입니다:', message.moter_value);
+        return;
+    }
+
+    // 2. 32비트 정수를 4개의 8비트 바이트로 분해 (Big-Endian 순서)
+    // 예: 260 (0x00000104)
+    const d0 = (moterValueInt >> 24) & 0xFF; // Data_0 (MSB) (예: 0x00)
+    const d1 = (moterValueInt >> 16) & 0xFF; // Data_1      (예: 0x00)
+    const d2 = (moterValueInt >> 8)  & 0xFF; // Data_2      (예: 0x01)
+    const d3 = moterValueInt & 0xFF;        // Data_3 (LSB) (예: 0x04)
+
+    // 3. 10바이트 패킷 구성
+    byteArray[0]=0x24; // $ 
+    byteArray[1]=0x01; // SlaveId 
+    byteArray[2]=0x57; // W  
+
+    if(message.id==fun_enum.Moter_First_ID){
+        byteArray[3]=0x01; // 주소 1
+    } else if(message.id==fun_enum.Moter_Second_ID){
+        byteArray[3]=0x02; // 주소 2
+    } else {
+        console.warn(`[Write Warn] 알 수 없는 ID: ${message.id}`);
+        return; // 처리할 ID가 아니면 종료
+    }
+
+    // 4. 4바이트 데이터 추가
+    byteArray[4]=d0;
+    byteArray[5]=d1;
+    byteArray[6]=d2;
+    byteArray[7]=d3;
+
+    // 5. 체크섬 계산
+    // C 코드: calculate_checksum(&buffer[1], 7) 
+    // (ID부터 D3까지 총 7바이트)
+    // JS/TS: byteArray.slice(1)는 index 1 (ID)부터 index 7 (D3)까지
+    //        [ID, W, Addr, D0, D1, D2, D3] 배열을 새로 만듭니다.
+    const dataToSum = byteArray.slice(1, 8); // index 1부터 8 직전(7)까지
+    const checksum = calculate_checksum(dataToSum);
+
+    // 6. 체크섬 및 종료 문자 추가
+    byteArray[8]=checksum; // checkSum값 (예: 260 전송 시 0x5E)
+    byteArray[9]=0x0A;   // \n
+
+    // 7. 전송
+    const dataToSend = Buffer.from(byteArray);
+    
+    g_port.write(dataToSend, (err) => {
+        if (err) {
+            return console.error('[Write Error] 전송 실패:', err.message);
+        }
+        // 예: 260 전송 시: <Buffer 24 01 57 01 00 00 01 04 5e 0a>
+        console.log('[Write Success] 데이터 전송 성공:', dataToSend);
+    });
 });
 
 // 포트 닫기 핸들러 추가
