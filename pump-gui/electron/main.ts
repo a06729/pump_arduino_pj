@@ -3,9 +3,8 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { createPort } from "./lib/serial_lib";
 import { SerialPort, DelimiterParser } from "serialport";
-import {moter_type,fun_enum} from "./type/main_type"
-import { motor } from './db/schema/schema'; 
-import { initDatabase, getDatabase } from './db/db';
+import {motor_type,motor_fun_enum} from "./type/main_type"
+import {getDatabase } from './db/db';
 
 const delimiter = Buffer.from('\n', 'utf8');
 let g_port: SerialPort | null = null;
@@ -44,11 +43,9 @@ function createWindow() {
 // parser 이벤트 리스너 설정 함수
 function setupParserListeners() {
   if (!g_parser) return;
-
   g_parser.on('data', async (data) => {
-// 1. Array.from()을 사용해 Array<number>로 변환
+    // 1. Array.from()을 사용해 Array<number>로 변환
     const byteArray: number[] = Array.from(data);
-    
     // 2. Uint8Array 자체로 사용 (가장 효율적)
     const uint8Array: Uint8Array = data;
 
@@ -211,9 +208,9 @@ ipcMain.on('all-stop-motor', (event, message) => {
  
 });
 
-ipcMain.on('cmd-channel', (event, message:moter_type) => {
+ipcMain.on('cmd-channel', (event, message:motor_type) => {
     let byteArray:number[]=[];
-    console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message.moter_value}"`);
+    console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message.motor_value}"`);
     
     if (!g_port || !g_port.isOpen) {
         console.error('[Write Error] 포트가 열려있지 않습니다.');
@@ -221,9 +218,9 @@ ipcMain.on('cmd-channel', (event, message:moter_type) => {
     }
 
     // 1. 렌더러에서 받은 문자열 값을 정수로 변환
-    const moterValueInt = parseInt(message.moter_value);
+    const moterValueInt = parseInt(message.motor_value);
     if (isNaN(moterValueInt)) {
-        console.error('[Write Error] 유효하지 않은 숫자 값입니다:', message.moter_value);
+        console.error('[Write Error] 유효하지 않은 숫자 값입니다:', message.motor_value);
         return;
     }
 
@@ -239,9 +236,9 @@ ipcMain.on('cmd-channel', (event, message:moter_type) => {
     byteArray[1]=0x01; // SlaveId 
     byteArray[2]=0x57; // W  
 
-    if(message.id==fun_enum.Moter_First_ID){
+    if(message.id==motor_fun_enum.Motor_First_ID){
         byteArray[3]=0x01; // 주소 1
-    } else if(message.id==fun_enum.Moter_Second_ID){
+    } else if(message.id==motor_fun_enum.Motor_Second_ID){
         byteArray[3]=0x02; // 주소 2
     } else {
         console.warn(`[Write Warn] 알 수 없는 ID: ${message.id}`);
