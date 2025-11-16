@@ -1,0 +1,5 @@
+CREATE TABLE `motor` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`time` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`ml` integer NOT NULL
+);

@@ -4,6 +4,8 @@ import path from 'path';
 import { createPort } from "./lib/serial_lib";
 import { SerialPort, DelimiterParser } from "serialport";
 import {moter_type,fun_enum} from "./type/main_type"
+import { motor } from './db/schema/schema'; 
+import { initDatabase, getDatabase } from './db/db';
 
 const delimiter = Buffer.from('\n', 'utf8');
 let g_port: SerialPort | null = null;
@@ -43,7 +45,7 @@ function createWindow() {
 function setupParserListeners() {
   if (!g_parser) return;
 
-  g_parser.on('data', (data) => {
+  g_parser.on('data', async (data) => {
 // 1. Array.from()을 사용해 Array<number>로 변환
     const byteArray: number[] = Array.from(data);
     
@@ -60,7 +62,34 @@ function setupParserListeners() {
       console.log(`${i} 번째 바이트: 0x${uint8Array[i].toString(16).toUpperCase().padStart(2, '0')}`);
     }    
 
-    
+    if (data.length >= 8) {
+      
+      // 2. 4번째 바이트(인덱스 4)부터 32비트(4바이트)를 Big Endian으로 읽기
+      // (data[4], data[5], data[6], data[7] 조합)
+      try {
+        //data[4]부터 int크기 4까지 다 합쳐서 int 숫자로 변환하는 기능
+        const combinedDecimalValue = data.readUInt32BE(4);
+        
+        console.log('\n--- 4~7 바이트 조합 (10진수) ---');
+        console.log('값 (Big Endian):', combinedDecimalValue); // 예: 260
+        const { db } = getDatabase();
+        const { motor } = await import('./db/schema/schema');
+        
+        const results = await db.insert(motor)
+        .values(
+          { ml:combinedDecimalValue }
+        )
+        .returning().execute();
+        
+        console.log(`result:${JSON.stringify(results)}`);
+
+      } catch (e) {
+        console.error('Buffer 읽기 중 오류 발생:', e);
+      }
+    } else {
+      console.log('\n[알림] 4바이트를 읽기에 데이터 길이가 충분하지 않습니다.');
+    }
+
     // 수신된 배열을 체크섬 함수에 바로 사용할 수 있습니다.
     // calculate_checksum(byteArray, byteArray.length); 
     
