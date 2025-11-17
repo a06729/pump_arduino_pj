@@ -13,7 +13,7 @@
 #include "FreeRTOS/task.h"
 #include "FreeRTOS/queue.h"
 #include "motor.h"
-
+#include "timer.h"
 
 //main.c 파일에 있는 xMoter1Queue을 가져오기위한 전역변수
 extern QueueHandle_t xMoter1Queue;
@@ -23,7 +23,6 @@ extern QueueHandle_t xMoter2Queue;
 extern TaskHandle_t xMotor1_Handle;
 
 extern TaskHandle_t xMotor2_Handle;
-
 
 
 // 가상의 데이터 저장소 (Address 0x00 ~ 0x0F)
@@ -172,10 +171,9 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 		} else if (addr == 2) {
 			xQueueSendToBack(xMoter2Queue, &data_32bit, portMAX_DELAY);
 		}else if(addr == 3){
-			//all_stop_motor();a
-			//모터1 테스트 삭제
-			vTaskDelete(xMotor1_Handle);
-			vTaskDelete(xMotor2_Handle);
+			//타이머를 초기화해서 기존에 지난 시간을 초기화
+			timer0_init();
+			//모든 모터 정지
 			all_stop_motor();
 		}
 	

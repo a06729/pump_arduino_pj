@@ -19,3 +19,5 @@ void motor_init();
 void motor_W1(int32_t data);
 
 void motor_W2(int32_t data);
+
+void vMoter_init();
