@@ -26,10 +26,15 @@ QueueHandle_t xMoter1Queue = NULL;
 //모터2 큐 핸들러
 QueueHandle_t xMoter2Queue = NULL;
 
+TaskHandle_t xMotor1_Handle = NULL;
+
+TaskHandle_t xMotor2_Handle = NULL;
+
+
 
 //모터1 제어를위한 Task 구현
 void vMoter1Task(void *pvParameters){
-	uint32_t ml_data;
+	int32_t ml_data;
 	while(1){
 		if(xQueueReceive(xMoter1Queue,&ml_data,portMAX_DELAY)==pdPASS){
 			//여기에 모터 함수 집어넣으면 된다
@@ -41,7 +46,7 @@ void vMoter1Task(void *pvParameters){
 
 //모터2 제어를위한 Task 구현
 void vMoter2Task(void *pvParameters){
-	uint32_t ml_data;
+	int32_t ml_data;
 	while(1){
 		if(xQueueReceive(xMoter2Queue,&ml_data,portMAX_DELAY)==pdPASS){
 			//여기에 모터 함수 집어넣으면 된다
@@ -133,9 +138,9 @@ int main(void) {
     // 수신 버퍼링을 위해 넉넉하게 설정
     xUartQueue = xQueueCreate(64, sizeof(uint8_t));
 	
-	xMoter1Queue = xQueueCreate(8, sizeof(uint32_t));
+	xMoter1Queue = xQueueCreate(8, sizeof(int32_t));
 	
-	xMoter2Queue = xQueueCreate(8, sizeof(uint32_t));
+	xMoter2Queue = xQueueCreate(8, sizeof(int32_t));
 
 	
     if (xUartQueue != NULL && xMoter1Queue != NULL) {
@@ -168,7 +173,7 @@ int main(void) {
 			configMINIMAL_STACK_SIZE ,
 			NULL,
 			tskIDLE_PRIORITY,
-			NULL
+			&xMotor1_Handle
 		);
 		
 		
@@ -178,7 +183,7 @@ int main(void) {
 			configMINIMAL_STACK_SIZE ,
 			NULL,
 			tskIDLE_PRIORITY,
-			NULL
+			&xMotor2_Handle
 		);
 		
 		

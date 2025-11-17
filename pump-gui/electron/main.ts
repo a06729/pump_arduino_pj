@@ -55,7 +55,7 @@ function setupParserListeners() {
     console.log('HEX: ', data.toString('hex').toUpperCase().match(/.{2}/g)?.join(' '));
     for(let i=0; i<data.length; i++){
       // Uint8Array의 개별 바이트 접근 (예: 첫 번째 바이트)
-      //console.log(`${uint8Array[i].toString(16).toUpperCase().padStart(2, '0')}`);
+      console.log(`${uint8Array[i].toString(16).toUpperCase().padStart(2, '0')}`);
       console.log(`${i} 번째 바이트: 0x${uint8Array[i].toString(16).toUpperCase().padStart(2, '0')}`);
     }    
 
@@ -210,6 +210,7 @@ ipcMain.on('all-stop-motor', (event, message) => {
 
 ipcMain.on('cmd-channel', (event, message:motor_type) => {
     let byteArray:number[]=[];
+    console.log(`message:${JSON.stringify(message)}`)
     console.log(`[Main Process] 렌더러로부터 메시지 수신: "${message.motor_value}"`);
     
     if (!g_port || !g_port.isOpen) {
@@ -223,6 +224,8 @@ ipcMain.on('cmd-channel', (event, message:motor_type) => {
         console.error('[Write Error] 유효하지 않은 숫자 값입니다:', message.motor_value);
         return;
     }
+
+
 
     // 2. 32비트 정수를 4개의 8비트 바이트로 분해 (Big-Endian 순서)
     // 예: 260 (0x00000104)

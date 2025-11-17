@@ -20,6 +20,10 @@ extern QueueHandle_t xMoter1Queue;
 
 extern QueueHandle_t xMoter2Queue;
 
+extern TaskHandle_t xMotor1_Handle;
+
+extern TaskHandle_t xMotor2_Handle;
+
 
 
 // 가상의 데이터 저장소 (Address 0x00 ~ 0x0F)
@@ -140,7 +144,7 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 	
 	// --- 체크섬 통과 ---
 	
-	uint32_t data_32bit = 0; // 32비트 데이터를 저장할 변수
+	int32_t data_32bit = 0; // 32비트 데이터를 저장할 변수
 
 	if (cmd == 'W') {
 		// 4. (핵심) 4바이트(D0~D3)를 32비트 int로 조립 (Big-Endian)
@@ -150,7 +154,7 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 		uint8_t d3 = buffer[FRAME_IDX_W_DATA_D3]; // 0x04 (LSB)
 		
 		// (uint32_t)로 먼저 캐스팅 후 비트 이동, 마지막에 int32_t로 변환
-		data_32bit = (((uint32_t)d0 << 24) |
+		data_32bit = ((int32_t)((uint32_t)d0 << 24) |
 		((uint32_t)d1 << 16) |
 		((uint32_t)d2 << 8)  |
 		(uint32_t)d3);
@@ -168,6 +172,10 @@ void process_packet(uint8_t *buffer, uint8_t length) {
 		} else if (addr == 2) {
 			xQueueSendToBack(xMoter2Queue, &data_32bit, portMAX_DELAY);
 		}else if(addr == 3){
+			//all_stop_motor();a
+			//모터1 테스트 삭제
+			vTaskDelete(xMotor1_Handle);
+			vTaskDelete(xMotor2_Handle);
 			all_stop_motor();
 		}
 	

@@ -2,9 +2,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 
-type moter_type={
+export type moter_type={
   id:number,
-  moter_value:string
+  motor_value:string
 }
 
 

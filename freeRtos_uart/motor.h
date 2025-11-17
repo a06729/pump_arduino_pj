@@ -16,6 +16,6 @@ void motor_init();
 //void LED_test(int32_t delay_value);
 
 //첫번째 유량모터 구동시키는 함수
-void motor_W1(uint32_t data);
+void motor_W1(int32_t data);
 
-void motor_W2(uint32_t data);
+void motor_W2(int32_t data);
