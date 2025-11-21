@@ -25,6 +25,8 @@ export default defineConfig({
                 'serialport',
                 'better-sqlite3',
                 'drizzle-orm',
+                'drizzle-orm/sqlite-core',
+                'drizzle-orm/better-sqlite3'
               ],
               output: {
                 format: 'cjs',
