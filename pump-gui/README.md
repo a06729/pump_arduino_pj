@@ -8,3 +8,6 @@ NODE_MODULE_INIT(/* exports, context */) {
 
 이 값으로 수정이 필요
 https://github.com/WiseLibs/better-sqlite3/issues/1401
+
+# visual studio toll 설치 명령어
+choco install python visualstudio2022-workload-vctools -y
