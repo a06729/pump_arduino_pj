@@ -129,7 +129,7 @@ function setupPortListeners() {
 }
 
 // react에서 시리얼 포트 연결 이벤트 발생시 실행 되는 함수
-ipcMain.handle('connectPorts', async (event, portName: string) => {
+ipcMain.handle('connectPorts', async (event, portName: string,baudRate:string) => {
   try {
     // 이미 포트가 열려있는 경우
     if (g_port && g_port.isOpen) {
@@ -138,7 +138,9 @@ ipcMain.handle('connectPorts', async (event, portName: string) => {
     }
 
     console.log('포트를 엽니다:', portName);
-    const port = createPort(portName);
+    console.log('baudRate:', baudRate);
+
+    const port = createPort(portName,baudRate);
 
     // 포트 열기를 Promise로 처리
     await new Promise<void>((resolve, reject) => {

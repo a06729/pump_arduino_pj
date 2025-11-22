@@ -35,11 +35,11 @@ async function getSerialPorts(){
       return ports;
 }
 
-async function getMotorData(){
-      const motorData = await window.myAPI.getMotorData();
-      console.log('사용 가능한 포트:', motorData);
-      return motorData;
-}
+// async function getMotorData(){
+//       const motorData = await window.myAPI.getMotorData();
+//       console.log('사용 가능한 포트:', motorData);
+//       return motorData;
+// }
 
 const IndexPage: React.FC = () => {
   //시리얼 포트 정보 satae 함수
@@ -78,11 +78,13 @@ const IndexPage: React.FC = () => {
   const connect = async () => {
 
     if (window.myAPI && window.myAPI.connectPorts) {
-      const success = await window.myAPI.connectPorts(selectedPort);
+      console.log(`baudRate 값:${baudRate}`);
+      const success = await window.myAPI.connectPorts(selectedPort,baudRate);
       if (success) {
         setIsConnected(true);
       } else {
         setError('포트 연결 실패');
+        setIsConnected(false);
       }
     }
 

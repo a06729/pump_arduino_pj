@@ -18,7 +18,7 @@ contextBridge.exposeInMainWorld('myAPI', {
   getSerialPorts:()=> ipcRenderer.invoke('getSerialPorts'),
 
   //시리얼 포트 연결 함수
-  connectPorts:(portName:string)=> ipcRenderer.invoke('connectPorts',portName),
+  connectPorts:(portName:string,baudRate:string)=> ipcRenderer.invoke('connectPorts',portName,baudRate),
 
   //시리얼 포트 연결 해제 함수
   closePort:()=> ipcRenderer.invoke('closePort'),
