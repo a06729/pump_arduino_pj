@@ -24,4 +24,7 @@ contextBridge.exposeInMainWorld('myAPI', {
   closePort:()=> ipcRenderer.invoke('closePort'),
 
   all_stop_motor:()=> ipcRenderer.send("all-stop-motor"),
+
+  getMotorData:()=>ipcRenderer.invoke('getMotorData'),
+
 });

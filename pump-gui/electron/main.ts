@@ -171,6 +171,14 @@ ipcMain.handle('connectPorts', async (event, portName: string) => {
   }
 });
 
+ipcMain.handle('getMotorData',async ()=>{
+    const { db } = getDatabase();
+    const { motor } = await import('./db/schema/schema');
+    const motorData = db.select().from(motor);
+    console.log(motorData.all());
+    return motorData.all();
+});
+
 ipcMain.handle('getSerialPorts', async () => {
   const port_list: { path: string; manufacturer?: string }[] = [];
   

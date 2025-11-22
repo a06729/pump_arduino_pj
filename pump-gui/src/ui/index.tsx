@@ -6,6 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wifi, WifiOff, Send, AlertCircle,StopCircleIcon } from 'lucide-react';
+// import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
+
+import type {myApi} from "../type/apiType"
+
 
 type motor_type={
   //모터 첫번쨰 두번쨰 인지 확인하는 값
@@ -20,15 +25,6 @@ type portList={
   manufacturer:string //시리얼 포트 설명이름
 }
 
-interface myApi {
-  sendMessage: (message: motor_type) => void;
-  getSerialPorts:()=>portList[];
-  connectPorts:(poartName:string)=>boolean;
-  all_stop_motor:()=>void;
-  closePort:()=>void;
-}
-
-
 
 declare global { interface Window { myAPI: myApi; } }
 
@@ -39,7 +35,13 @@ async function getSerialPorts(){
       return ports;
 }
 
-const SerialCommunicationUI: React.FC = () => {
+async function getMotorData(){
+      const motorData = await window.myAPI.getMotorData();
+      console.log('사용 가능한 포트:', motorData);
+      return motorData;
+}
+
+const IndexPage: React.FC = () => {
   //시리얼 포트 정보 satae 함수
   const [portList,setPortList]=useState<portList[]>([]);
   //시리얼 연결 ON OFF 체크하기 위한 satae
@@ -68,7 +70,7 @@ const SerialCommunicationUI: React.FC = () => {
             console.log(`ports:${ports[0].path}`);
           });
         } else {
-          // console.error('myAPI.sendMessage is not available on window object.');
+          console.error('myAPI.sendMessage is not available on window object.');
         }
   }, []);
 
@@ -123,7 +125,7 @@ const SerialCommunicationUI: React.FC = () => {
     setInputMoter_S('');
     setError('');
   };
-
+  //모든 모터 정지
   const all_stop_motor=async()=>{
     console.log("긴급정지");
     if (window.myAPI && window.myAPI.all_stop_motor!=undefined) {
@@ -132,8 +134,12 @@ const SerialCommunicationUI: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="max-w-6xl mx-auto space-y-4">
+    <div className="flex min-h-screen  from-slate-50 to-slate-100">
+      <div>
+            <AppSidebar/>
+      </div>
+      <div className="max-w-6xl mx-auto space-y-4 p-4">
+
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-slate-800 mb-2">시리얼 통신 인터페이스</h1>
           <p className="text-slate-600">Web Serial API를 사용한 시리얼 포트 통신</p>
@@ -252,4 +258,4 @@ const SerialCommunicationUI: React.FC = () => {
   );
 };
 
-export default SerialCommunicationUI;
+export default IndexPage;
