@@ -32,6 +32,7 @@ export function initDatabase() {
     const createMotorTable = `
       CREATE TABLE IF NOT EXISTS motor (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        motorName TEXT NOT NULL,
         time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         ml INTEGER NOT NULL
       );

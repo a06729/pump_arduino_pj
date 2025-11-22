@@ -1,0 +1,1 @@
+ALTER TABLE `motor` ADD `motor_name` text NOT NULL;

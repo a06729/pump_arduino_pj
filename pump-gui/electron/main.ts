@@ -66,19 +66,38 @@ function setupParserListeners() {
       try {
         //data[4]부터 int크기 4까지 다 합쳐서 int 숫자로 변환하는 기능
         const combinedDecimalValue = data.readUInt32BE(4);
-        
-        console.log('\n--- 4~7 바이트 조합 (10진수) ---');
-        console.log('값 (Big Endian):', combinedDecimalValue); // 예: 260
-        const { db } = getDatabase();
-        const { motor } = await import('./db/schema/schema');
-        
-        const results = await db.insert(motor)
-        .values(
-          { ml:combinedDecimalValue }
-        )
-        .returning().execute();
-        
-        console.log(`result:${JSON.stringify(results)}`);
+        const motor_index:number=data[3];
+        if(motor_index==1){
+            console.log('\n--- 4~7 바이트 조합 (10진수) ---');
+            console.log('값 (Big Endian):', combinedDecimalValue); // 예: 260
+            const { db } = getDatabase();
+            const { motor } = await import('./db/schema/schema');
+            
+            const results = await db.insert(motor)
+            .values(
+              { ml:combinedDecimalValue,
+                motorName:"motor1"
+              }
+            )
+            .returning().execute();
+            
+            console.log(`result:${JSON.stringify(results)}`);
+        }else if(motor_index==2){
+            console.log('\n--- 4~7 바이트 조합 (10진수) ---');
+            console.log('값 (Big Endian):', combinedDecimalValue); // 예: 260
+            const { db } = getDatabase();
+            const { motor } = await import('./db/schema/schema');
+            
+            const results = await db.insert(motor)
+            .values(
+              { ml:combinedDecimalValue,
+                motorName:"motor2"
+              }
+            )
+            .returning().execute();
+            
+            console.log(`result:${JSON.stringify(results)}`);
+        }
 
       } catch (e) {
         console.error('Buffer 읽기 중 오류 발생:', e);
