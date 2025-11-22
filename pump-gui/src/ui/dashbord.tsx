@@ -20,20 +20,6 @@ interface ChartData extends GroupedData {
 }
 
 async function getMotorData() {
-  if (!window.myAPI) {
-    // 더미 데이터
-    return [
-        { id: 1, motorName: 'motor1', time: '2025-11-22 02:33:52', ml: 100 },
-        { id: 2, motorName: 'motor1', time: '2025-11-22 02:34:05', ml: 100 },
-        { id: 3, motorName: 'motor1', time: '2025-11-22 02:36:37', ml: 100 },
-        { id: 4, motorName: 'motor2', time: '2025-11-22 02:36:44', ml: 100 },
-        { id: 5, motorName: 'motor2', time: '2025-11-22 02:36:54', ml: 400 },
-        { id: 6, motorName: 'motor1', time: '2025-11-22 04:22:12', ml: 120 },
-        { id: 7, motorName: 'motor2', time: '2025-11-22 04:22:15', ml: 145 },
-        // 오늘 날짜 테스트를 위해 현재 날짜 데이터 추가 (실행 시점에 따라 다를 수 있음)
-        { id: 8, motorName: 'motor1', time: new Date().toISOString().replace('T', ' ').substring(0, 19), ml: 50 } 
-    ] as MotorData[];
-  }
   const motorData = await window.myAPI.getMotorData();
   return motorData;
 }
@@ -48,35 +34,52 @@ const MotorUsageDashboard = () => {
     });
   }, []);
 
-  // --- [로직 1] 주별 데이터 (이번 주) ---
+// --- [수정됨] 주별 데이터 (최근 7일 기준) ---
   const weeklyData = useMemo(() => {
     const today = new Date();
-    const currentDay = today.getDay(); 
-    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - currentDay);
+    
+    // [핵심 변경] 시작일을 "이번주 일요일"이 아니라 "오늘로부터 6일 전"으로 설정
+    const startDay = new Date(today);
+    startDay.setDate(today.getDate() - 6); 
+
+    // 날짜 포맷 헬퍼 (YYYY-MM-DD)
+    const formatKey = (date: Date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
 
     const weekTemplate: Record<string, ChartData> = {};
     const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
+    // 7일치 템플릿 생성
     for (let i = 0; i < 7; i++) {
-      const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
+      const d = new Date(startDay);
+      d.setDate(startDay.getDate() + i);
       
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const dateKey = `${yyyy}-${mm}-${dd}`;
-      const label = `${mm}/${dd}(${dayNames[d.getDay()]})`;
+      const dateKey = formatKey(d);
+      // 라벨 예시: "11/22(토)"
+      const label = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}(${dayNames[d.getDay()]})`;
 
       weekTemplate[dateKey] = { name: label, key: dateKey, motor1: 0, motor2: 0 };
     }
 
+    // 데이터 매핑
     data.forEach(item => {
-      const dateKey = item.time.split(' ')[0];
-      if (weekTemplate[dateKey]) {
-        if (item.motorName === 'motor1') weekTemplate[dateKey].motor1 += item.ml;
-        else if (item.motorName === 'motor2') weekTemplate[dateKey].motor2 += item.ml;
+      const itemDate = new Date(item.time);
+      
+      if (!isNaN(itemDate.getTime())) {
+        const dateKey = formatKey(itemDate);
+
+        // 템플릿에 해당 날짜가 있다면 데이터 추가
+        if (weekTemplate[dateKey]) {
+          if (item.motorName === 'motor1') weekTemplate[dateKey].motor1 += item.ml;
+          else if (item.motorName === 'motor2') weekTemplate[dateKey].motor2 += item.ml;
+        }
       }
     });
+
     return Object.values(weekTemplate);
   }, [data]);
 

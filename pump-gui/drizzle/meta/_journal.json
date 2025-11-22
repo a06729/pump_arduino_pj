@@ -15,6 +15,13 @@
       "when": 1763778599812,
       "tag": "0001_massive_leech",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1763824764505,
+      "tag": "0002_brainy_wolfpack",
+      "breakpoints": true
     }
   ]
 }

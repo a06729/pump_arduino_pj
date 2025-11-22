@@ -6,6 +6,6 @@ export const motor = sqliteTable('motor', {
   motorName: text('motor_name').notNull(), // 'motor1' 또는 'motor2'
   time: text('time') 
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`(datetime('now', 'localtime'))`),
   ml: integer('ml').notNull(),
 });
