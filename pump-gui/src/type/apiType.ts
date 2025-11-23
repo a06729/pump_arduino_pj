@@ -1,3 +1,6 @@
+import {ipcRenderer} from 'electron';
+
+
 type motor_type={
   //모터 첫번쨰 두번쨰 인지 확인하는 값
   id:number,
@@ -25,4 +28,5 @@ export interface myApi {
   connectPorts:(poartName:string,baudRate:string)=>boolean;//시리얼 포트를 연결하기 위한 함수
   all_stop_motor:()=>void; //모든 모터를 멈추기 위한 함수
   closePort:()=>void; // 시리얼 포트를 닫기 위한 함수
+  onDownloadProgress: (callback: (percent: number) => void) => () => void;
 }

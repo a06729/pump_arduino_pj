@@ -1,14 +1,19 @@
 // electron/main.ts
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain,dialog, MessageBoxOptions } from 'electron';
 import path from 'path';
 import { createPort } from "./lib/serial_lib";
 import { SerialPort, DelimiterParser } from "serialport";
 import {motor_type,motor_fun_enum} from "./type/main_type"
 import {getDatabase } from './db/db';
+import { autoUpdater } from 'electron-updater';
 
 const delimiter = Buffer.from('\n', 'utf8');
 let g_port: SerialPort | null = null;
 let g_parser: DelimiterParser | null = null;
+let win: BrowserWindow | null = null;
+
+//오토 다운로드 방지
+autoUpdater.autoDownload = false;
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
@@ -23,20 +28,22 @@ function calculate_checksum(buffer: number[]): number {
 }
 
 function createWindow() {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
     },
   });
-
+  console.log(`VITE_DEV_SERVER_URL:${VITE_DEV_SERVER_URL}`);
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
     win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, '../../index.html'));
     win.webContents.openDevTools();
+    autoUpdater.checkForUpdatesAndNotify();
+
   }
 }
 
@@ -173,6 +180,7 @@ ipcMain.handle('connectPorts', async (event, portName: string,baudRate:string) =
   }
 });
 
+//모터 데이터 정보를 sqlite에서 가져오는 함수
 ipcMain.handle('getMotorData',async ()=>{
     const { db } = getDatabase();
     const { motor } = await import('./db/schema/schema');
@@ -343,4 +351,88 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+
+/* ---------------------------------------------------
+ * Auto Updater 이벤트 리스너
+ * --------------------------------------------------- */
+
+// 1. 업데이트 확인 중
+autoUpdater.on('checking-for-update', () => {
+  console.log('업데이트 확인 중...');
+});
+
+// 2. [수정됨] 업데이트가 가능함 -> 다이얼로그 띄우기
+autoUpdater.on('update-available', (info) => {
+  console.log('업데이트 발견:', info.version);
+
+  // 사용자에게 업데이트 여부 묻기
+  const option:MessageBoxOptions = {
+    type: 'info',
+    title: '업데이트 발견',
+    message: `새로운 버전(${info.version})이 출시되었습니다.\n지금 다운로드하시겠습니까?`,
+    buttons: ['지금 다운로드', '나중에'],
+    defaultId: 0, // '지금 다운로드'가 기본 선택
+    cancelId: 1   // 창 닫기나 ESC 누르면 '나중에'로 처리
+  };
+
+  if (win) {
+    dialog.showMessageBox(win, option).then((result) => {
+      if (result.response === 0) {
+        // 사용자가 '지금 다운로드'를 클릭하면 다운로드 시작
+        console.log('사용자가 다운로드를 승인했습니다.');
+        autoUpdater.downloadUpdate(); 
+      } else {
+        console.log('사용자가 다운로드를 거절했습니다.');
+      }
+    });
+  }
+});
+
+// 3. 업데이트가 없음
+autoUpdater.on('update-not-available', (info) => {
+  console.log('현재 최신 버전입니다.');
+  // 앱 시작 시마다 "최신 버전입니다" 창이 뜨면 귀찮으므로 여기선 로그만 남기는 게 좋습니다.
+});
+
+// 4. 다운로드 진행 중
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "다운로드 속도: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - 현재 ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  console.log(log_message);
+
+  // 렌더러 프로세스로 진행률 전송 (화면에 진행바 보여주기용)
+  win?.webContents.send('download-progress', progressObj.percent);
+});
+
+// 5. [기존 유지] 다운로드 완료 -> 재시작 여부 묻기
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('다운로드 완료.');
+  
+  const option:MessageBoxOptions = {
+    type: 'question',
+    buttons: ['재시작 후 설치', '나중에'],
+    defaultId: 0,
+    title: '설치 준비 완료',
+    message: '업데이트 다운로드가 완료되었습니다.\n지금 재시작하여 설치하시겠습니까?',
+  };
+
+  if (win) {
+    dialog.showMessageBox(win, option).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall(); 
+      }
+    });
+  }
+});
+
+// 6. [추가됨] 에러 발생 시 사용자에게 알림 (선택 사항)
+autoUpdater.on('error', (err) => {
+  console.error('에러 발생:', err);
+  if (win) {
+      dialog.showErrorBox('업데이트 에러', '업데이트 중 문제가 발생했습니다.\n' + (err.message || err));
+  }
+  
 });

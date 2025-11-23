@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wifi, WifiOff, Send, AlertCircle,StopCircleIcon } from 'lucide-react';
 // import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-
 import type {myApi} from "../type/apiType"
 
 
@@ -59,6 +58,25 @@ const IndexPage: React.FC = () => {
   const [inputMotor_S, setInputMoter_S] = useState('');
 
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    // window.myAPI가 존재하는지 체크 (안전장치)
+    if (window.myAPI) {
+      console.log("리스너 등록됨");
+
+      // 1. 리스너 등록 (preload에서 만든 함수 호출)
+      // 이 함수는 '제거 함수(removeListener)'를 리턴합니다.
+      const removeListener = window.myAPI.onDownloadProgress((percent) => {
+        console.log('받은 퍼센트:', percent);
+      });
+
+      // 2. 컴포넌트가 사라질 때(Unmount) 리스너 제거
+      return () => {
+        console.log("리스너 해제됨");
+        removeListener(); // preload에서 리턴받은 제거 함수 실행
+      };
+    }
+  }, []); // 빈 배열: 컴포넌트 처음 렌더링될 때 한 번만 실행
 
 
   useEffect(() => {
@@ -143,7 +161,7 @@ const IndexPage: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-4 p-4">
 
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">시리얼 통신 인터페이스</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">시리얼 통신 2</h1>
           <p className="text-slate-600">Web Serial API를 사용한 시리얼 포트 통신</p>
         </div>
         {error && (

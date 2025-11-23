@@ -1,5 +1,5 @@
 // electron/preload.ts
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
 
 export type moter_type={
@@ -26,5 +26,22 @@ contextBridge.exposeInMainWorld('myAPI', {
   all_stop_motor:()=> ipcRenderer.send("all-stop-motor"),
 
   getMotorData:()=>ipcRenderer.invoke('getMotorData'),
+
+  // 다운로드 진행률 리스너 (콜백을 인자로 받음)
+  onDownloadProgress: (callback: (percent: number) => void) => {
+    // 1. 실제 IPC 리스너 함수 정의
+    const listener = (_event: IpcRendererEvent, percent: number) => {
+      callback(percent);
+    };
+
+    // 2. 채널에 리스너 등록
+    ipcRenderer.on('download-progress', listener);
+
+    // 3. [중요] 리스너를 제거(해제)하는 함수를 반환!
+    // React의 useEffect cleanup 함수에서 이것을 호출하게 됩니다.
+    return () => {
+      ipcRenderer.removeListener('download-progress', listener);
+    };
+  },
 
 });

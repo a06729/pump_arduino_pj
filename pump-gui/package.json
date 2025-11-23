@@ -1,7 +1,7 @@
 {
   "name": "pump-gui",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "dist/electron/main/main.js",
   "scripts": {
     "dev": "vite",
@@ -9,10 +9,16 @@
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint .",
     "preview": "vite preview",
+    "publish": "tsc && vite build && env-cmd -f .env electron-builder --publish always",
     "start:prod": "npm run build && electron .",
     "package": "npm run build && electron-builder",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a06729/pump_arduino_pj.git",
+    "directory": "pump-gui"
   },
   "build": {
     "appId": "com.pump.gui",
@@ -24,6 +30,11 @@
     "files": [
       "dist/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "a06729",
+      "repo": "pump_arduino_pj"
+    },
     "extraResources": [
       {
         "from": "data",
@@ -43,6 +54,9 @@
       "target": [
         "nsis",
         "portable"
+      ],
+      "publish": [
+        "github"
       ]
     }
   },
@@ -61,6 +75,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
+    "electron-updater": "^6.6.2",
     "lucide-react": "^0.552.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -84,6 +99,7 @@
     "electron": "^39.1.0",
     "electron-builder": "^26.0.12",
     "electron-rebuild": "^3.2.9",
+    "env-cmd": "^11.0.0",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
