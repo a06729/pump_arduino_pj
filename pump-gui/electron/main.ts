@@ -431,8 +431,8 @@ autoUpdater.on('update-downloaded', (info) => {
 // 6. [추가됨] 에러 발생 시 사용자에게 알림 (선택 사항)
 autoUpdater.on('error', (err) => {
   console.error('에러 발생:', err);
-  if (win) {
-      dialog.showErrorBox('업데이트 에러', '업데이트 중 문제가 발생했습니다.\n' + (err.message || err));
-  }
+  // if (win) {
+  //     dialog.showErrorBox('업데이트 에러', '업데이트 중 문제가 발생했습니다.\n' + (err.message || err));
+  // }
   
 });
