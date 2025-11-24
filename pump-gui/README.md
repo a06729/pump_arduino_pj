@@ -7,6 +7,9 @@
 Windows 환경에서 네이티브 모듈 빌드를 위해 **Python**과 **Visual Studio C++ Build Tools**가 필요합니다.
 PowerShell을 **관리자 권한**으로 실행한 후 아래 명령어를 입력하세요.
 
+## Node js 버전
+v22.21.1
+
 ```powershell
 choco install python visualstudio2022-workload-vctools -y
 
