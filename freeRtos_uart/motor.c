@@ -38,9 +38,12 @@ void motor_W1(int32_t data){
 	
 	double C=0; // 보정 계수 변수 선언
 	
-	if (data <= 150) {
+	if (data <= 50) {
+		C = 0.573; // 작은 양에 대해 이전 보정 계수 사용
+	}else if(data<=150){
 		C = 0.603; // 작은 양에 대해 이전 보정 계수 사용
-	}else if(data<=200){
+	}
+	else if(data<=200){
 		C= 0.673;
 	} 
 	else {
@@ -72,16 +75,16 @@ void motor_W2(int32_t data){
 	
 	double C=0; // 보정 계수 변수 선언
 	
-	if (data <= 150) {
+	if (data <= 50) {
+		C = 0.573; // 작은 양에 대해 이전 보정 계수 사용
+	}else if(data<=150){
 		C = 0.603; // 작은 양에 대해 이전 보정 계수 사용
 	}else if(data<=200){
-		//이전값:0.643
-		C= 0.633;
+		C= 0.673;
 	}else {
-		//0.700 이전값 (275ml를 넣었을시 정확하게 나온다)
-		C = 0.660; // 큰 양에 대해 새로운 보정 계수 사용 (예시 값)
+		//0.820 이전값 (275ml를 넣었을시 정확하게 나온다)
+		C = 0.820; // 큰 양에 대해 새로운 보정 계수 사용 (예시 값)
 	}
-	
 	// 2. 보정된 시간 계산 (단위: 초)
 	// Time(s) = (Target / Flow_Rate + T_offset) * C
 	double time_in_seconds = (target_d / PUMP_FLOW_RATE_S_M2 + TIME_OFFSET_S_M2) * C;
