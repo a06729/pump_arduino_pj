@@ -9,6 +9,7 @@ import { Wifi, WifiOff, Send, AlertCircle,StopCircleIcon } from 'lucide-react';
 // import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import type {myApi} from "../type/apiType"
+import AIChatbot from './AIChatbot';
 
 
 type motor_type={
@@ -161,7 +162,7 @@ const IndexPage: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-4 p-4">
 
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">시리얼 통신 2</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">시리얼 통신 3</h1>
           <p className="text-slate-600">Web Serial API를 사용한 시리얼 포트 통신</p>
         </div>
         {error && (
@@ -272,7 +273,8 @@ const IndexPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
+        
+        <AIChatbot apiKey={import.meta.env.VITE_GOOGLE_AI_API_KEY} />
       </div>
     </div>
   );
