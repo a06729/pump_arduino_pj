@@ -3,7 +3,7 @@
 #define UBRR_VALUE (F_CPU / 16 / BAUD - 1)
 
 
-#define USART_TX_BUFFER_SIZE 256
+#define USART_TX_BUFFER_SIZE 64
 #define USART_RX_BUFFER_SIZE 64
 
 
