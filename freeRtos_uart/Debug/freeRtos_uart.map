@@ -1110,13 +1110,13 @@ END GROUP
                                 0xc08 (size before relaxing)
  .debug_str     0x00001207      0x11e main.o
                                 0x346 (size before relaxing)
- .debug_str     0x00001325       0xad motor.o
-                                0x1ff (size before relaxing)
- .debug_str     0x000013d2       0xa8 protocol.o
+ .debug_str     0x00001325       0x67 motor.o
+                                0x203 (size before relaxing)
+ .debug_str     0x0000138c       0xa8 protocol.o
                                 0x2cc (size before relaxing)
- .debug_str     0x0000147a       0x86 timer.o
+ .debug_str     0x00001434       0x86 timer.o
                                 0x213 (size before relaxing)
- .debug_str     0x00001500       0xa8 uart.o
+ .debug_str     0x000014ba       0xee uart.o
                                 0x25d (size before relaxing)
 
 .debug_loc      0x00000000     0x4367

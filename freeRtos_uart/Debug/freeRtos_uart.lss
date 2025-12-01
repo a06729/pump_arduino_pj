@@ -101,18 +101,39 @@ Disassembly of section .text:
       a2:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
 000000a6 <pvPortMalloc>:
+static size_t xNextFreeByte = ( size_t ) 0;
+
+/*-----------------------------------------------------------*/
+
+void *pvPortMalloc( size_t xWantedSize )
+{
       a6:	cf 93       	push	r28
       a8:	df 93       	push	r29
       aa:	ec 01       	movw	r28, r24
+			xWantedSize += ( portBYTE_ALIGNMENT - ( xWantedSize & portBYTE_ALIGNMENT_MASK ) );
+		}
+	}
+	#endif
+
+	vTaskSuspendAll();
       ac:	0e 94 e5 06 	call	0xdca	; 0xdca <vTaskSuspendAll>
+	{
+		if( pucAlignedHeap == NULL )
       b0:	80 91 2c 01 	lds	r24, 0x012C	; 0x80012c <__data_end>
       b4:	90 91 2d 01 	lds	r25, 0x012D	; 0x80012d <__data_end+0x1>
       b8:	89 2b       	or	r24, r25
       ba:	31 f4       	brne	.+12     	; 0xc8 <pvPortMalloc+0x22>
+		{
+			/* Ensure the heap starts on a correctly aligned boundary. */
+			pucAlignedHeap = ( uint8_t * ) ( ( ( portPOINTER_SIZE_TYPE ) &ucHeap[ portBYTE_ALIGNMENT ] ) & ( ~( ( portPOINTER_SIZE_TYPE ) portBYTE_ALIGNMENT_MASK ) ) );
       bc:	81 e3       	ldi	r24, 0x31	; 49
       be:	91 e0       	ldi	r25, 0x01	; 1
       c0:	90 93 2d 01 	sts	0x012D, r25	; 0x80012d <__data_end+0x1>
       c4:	80 93 2c 01 	sts	0x012C, r24	; 0x80012c <__data_end>
+		}
+
+		/* Check there is enough room left for the allocation. */
+		if( ( ( xNextFreeByte + xWantedSize ) < configADJUSTED_HEAP_SIZE ) &&
       c8:	20 91 2e 01 	lds	r18, 0x012E	; 0x80012e <xNextFreeByte>
       cc:	30 91 2f 01 	lds	r19, 0x012F	; 0x80012f <xNextFreeByte+0x1>
       d0:	c9 01       	movw	r24, r18
@@ -125,65 +146,139 @@ Disassembly of section .text:
       de:	28 17       	cp	r18, r24
       e0:	39 07       	cpc	r19, r25
       e2:	70 f4       	brcc	.+28     	; 0x100 <pvPortMalloc+0x5a>
+			( ( xNextFreeByte + xWantedSize ) > xNextFreeByte )	)/* Check for overflow. */
+		{
+			/* Return the next free byte then increment the index past this
+			block. */
+			pvReturn = pucAlignedHeap + xNextFreeByte;
       e4:	c0 91 2c 01 	lds	r28, 0x012C	; 0x80012c <__data_end>
       e8:	d0 91 2d 01 	lds	r29, 0x012D	; 0x80012d <__data_end+0x1>
       ec:	c2 0f       	add	r28, r18
       ee:	d3 1f       	adc	r29, r19
+			xNextFreeByte += xWantedSize;
       f0:	90 93 2f 01 	sts	0x012F, r25	; 0x80012f <xNextFreeByte+0x1>
       f4:	80 93 2e 01 	sts	0x012E, r24	; 0x80012e <xNextFreeByte>
       f8:	05 c0       	rjmp	.+10     	; 0x104 <pvPortMalloc+0x5e>
+
+/*-----------------------------------------------------------*/
+
+void *pvPortMalloc( size_t xWantedSize )
+{
+void *pvReturn = NULL;
       fa:	c0 e0       	ldi	r28, 0x00	; 0
       fc:	d0 e0       	ldi	r29, 0x00	; 0
       fe:	02 c0       	rjmp	.+4      	; 0x104 <pvPortMalloc+0x5e>
      100:	c0 e0       	ldi	r28, 0x00	; 0
      102:	d0 e0       	ldi	r29, 0x00	; 0
+			xNextFreeByte += xWantedSize;
+		}
+
+		traceMALLOC( pvReturn, xWantedSize );
+	}
+	( void ) xTaskResumeAll();
      104:	0e 94 a5 07 	call	0xf4a	; 0xf4a <xTaskResumeAll>
+		}
+	}
+	#endif
+
+	return pvReturn;
+}
      108:	ce 01       	movw	r24, r28
      10a:	df 91       	pop	r29
      10c:	cf 91       	pop	r28
      10e:	08 95       	ret
 
 00000110 <vPortFree>:
+/*-----------------------------------------------------------*/
+
+void vPortFree( void *pv )
+{
      110:	08 95       	ret
 
 00000112 <vListInitialise>:
+/*-----------------------------------------------------------
+ * PUBLIC LIST API documented in list.h
+ *----------------------------------------------------------*/
+
+void vListInitialise( List_t * const pxList )
+{
      112:	fc 01       	movw	r30, r24
+	/* The list structure contains a list item which is used to mark the
+	end of the list.  To initialise the list the list end is inserted
+	as the only list entry. */
+	pxList->pxIndex = ( ListItem_t * ) &( pxList->xListEnd );			/*lint !e826 !e740 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
      114:	03 96       	adiw	r24, 0x03	; 3
      116:	92 83       	std	Z+2, r25	; 0x02
      118:	81 83       	std	Z+1, r24	; 0x01
+
+	/* The list end value is the highest possible value in the list to
+	ensure it remains at the end of the list. */
+	pxList->xListEnd.xItemValue = portMAX_DELAY;
      11a:	2f ef       	ldi	r18, 0xFF	; 255
      11c:	3f ef       	ldi	r19, 0xFF	; 255
      11e:	34 83       	std	Z+4, r19	; 0x04
      120:	23 83       	std	Z+3, r18	; 0x03
+
+	/* The list end next and previous pointers point to itself so we know
+	when the list is empty. */
+	pxList->xListEnd.pxNext = ( ListItem_t * ) &( pxList->xListEnd );	/*lint !e826 !e740 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
      122:	96 83       	std	Z+6, r25	; 0x06
      124:	85 83       	std	Z+5, r24	; 0x05
+	pxList->xListEnd.pxPrevious = ( ListItem_t * ) &( pxList->xListEnd );/*lint !e826 !e740 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
      126:	90 87       	std	Z+8, r25	; 0x08
      128:	87 83       	std	Z+7, r24	; 0x07
+
+	pxList->uxNumberOfItems = ( UBaseType_t ) 0U;
      12a:	10 82       	st	Z, r1
      12c:	08 95       	ret
 
 0000012e <vListInitialiseItem>:
+/*-----------------------------------------------------------*/
+
+void vListInitialiseItem( ListItem_t * const pxItem )
+{
+	/* Make sure the list item is not recorded as being on a list. */
+	pxItem->pvContainer = NULL;
      12e:	fc 01       	movw	r30, r24
      130:	11 86       	std	Z+9, r1	; 0x09
      132:	10 86       	std	Z+8, r1	; 0x08
      134:	08 95       	ret
 
 00000136 <vListInsertEnd>:
+	listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem );
+}
+/*-----------------------------------------------------------*/
+
+void vListInsertEnd( List_t * const pxList, ListItem_t * const pxNewListItem )
+{
      136:	cf 93       	push	r28
      138:	df 93       	push	r29
      13a:	9c 01       	movw	r18, r24
      13c:	fb 01       	movw	r30, r22
+ListItem_t * const pxIndex = pxList->pxIndex;
      13e:	dc 01       	movw	r26, r24
      140:	11 96       	adiw	r26, 0x01	; 1
      142:	cd 91       	ld	r28, X+
      144:	dc 91       	ld	r29, X
      146:	12 97       	sbiw	r26, 0x02	; 2
+	listTEST_LIST_ITEM_INTEGRITY( pxNewListItem );
+
+	/* Insert a new list item into pxList, but rather than sort the list,
+	makes the new list item the last item to be removed by a call to
+	listGET_OWNER_OF_NEXT_ENTRY(). */
+	pxNewListItem->pxNext = pxIndex;
      148:	d3 83       	std	Z+3, r29	; 0x03
      14a:	c2 83       	std	Z+2, r28	; 0x02
+	pxNewListItem->pxPrevious = pxIndex->pxPrevious;
      14c:	8c 81       	ldd	r24, Y+4	; 0x04
      14e:	9d 81       	ldd	r25, Y+5	; 0x05
      150:	95 83       	std	Z+5, r25	; 0x05
      152:	84 83       	std	Z+4, r24	; 0x04
+
+	/* Only used during decision coverage testing. */
+	mtCOVERAGE_TEST_DELAY();
+
+	pxIndex->pxPrevious->pxNext = pxNewListItem;
      154:	8c 81       	ldd	r24, Y+4	; 0x04
      156:	9d 81       	ldd	r25, Y+5	; 0x05
      158:	dc 01       	movw	r26, r24
@@ -191,32 +286,59 @@ Disassembly of section .text:
      15c:	7c 93       	st	X, r23
      15e:	6e 93       	st	-X, r22
      160:	12 97       	sbiw	r26, 0x02	; 2
+	pxIndex->pxPrevious = pxNewListItem;
      162:	7d 83       	std	Y+5, r23	; 0x05
      164:	6c 83       	std	Y+4, r22	; 0x04
+
+	/* Remember which list the item is in. */
+	pxNewListItem->pvContainer = ( void * ) pxList;
      166:	31 87       	std	Z+9, r19	; 0x09
      168:	20 87       	std	Z+8, r18	; 0x08
+
+	( pxList->uxNumberOfItems )++;
      16a:	f9 01       	movw	r30, r18
      16c:	80 81       	ld	r24, Z
      16e:	8f 5f       	subi	r24, 0xFF	; 255
      170:	80 83       	st	Z, r24
+}
      172:	df 91       	pop	r29
      174:	cf 91       	pop	r28
      176:	08 95       	ret
 
 00000178 <vListInsert>:
+/*-----------------------------------------------------------*/
+
+void vListInsert( List_t * const pxList, ListItem_t * const pxNewListItem )
+{
      178:	cf 93       	push	r28
      17a:	df 93       	push	r29
      17c:	eb 01       	movw	r28, r22
+ListItem_t *pxIterator;
+const TickType_t xValueOfInsertion = pxNewListItem->xItemValue;
      17e:	48 81       	ld	r20, Y
      180:	59 81       	ldd	r21, Y+1	; 0x01
+	new list item should be placed after it.  This ensures that TCB's which are
+	stored in ready lists (all of which have the same xItemValue value) get a
+	share of the CPU.  However, if the xItemValue is the same as the back marker
+	the iteration loop below will not end.  Therefore the value is checked
+	first, and the algorithm slightly modified if necessary. */
+	if( xValueOfInsertion == portMAX_DELAY )
      182:	4f 3f       	cpi	r20, 0xFF	; 255
      184:	2f ef       	ldi	r18, 0xFF	; 255
      186:	52 07       	cpc	r21, r18
      188:	21 f4       	brne	.+8      	; 0x192 <vListInsert+0x1a>
+	{
+		pxIterator = pxList->xListEnd.pxPrevious;
      18a:	fc 01       	movw	r30, r24
      18c:	a7 81       	ldd	r26, Z+7	; 0x07
      18e:	b0 85       	ldd	r27, Z+8	; 0x08
      190:	0d c0       	rjmp	.+26     	; 0x1ac <vListInsert+0x34>
+			4) Using a queue or semaphore before it has been initialised or
+			   before the scheduler has been started (are interrupts firing
+			   before vTaskStartScheduler() has been called?).
+		**********************************************************************/
+
+		for( pxIterator = ( ListItem_t * ) &( pxList->xListEnd ); pxIterator->pxNext->xItemValue <= xValueOfInsertion; pxIterator = pxIterator->pxNext ) /*lint !e826 !e740 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
      192:	dc 01       	movw	r26, r24
      194:	13 96       	adiw	r26, 0x03	; 3
      196:	01 c0       	rjmp	.+2      	; 0x19a <vListInsert+0x22>
@@ -230,48 +352,80 @@ Disassembly of section .text:
      1a6:	42 17       	cp	r20, r18
      1a8:	53 07       	cpc	r21, r19
      1aa:	b0 f7       	brcc	.-20     	; 0x198 <vListInsert+0x20>
+			/* There is nothing to do here, just iterating to the wanted
+			insertion position. */
+		}
+	}
+
+	pxNewListItem->pxNext = pxIterator->pxNext;
      1ac:	12 96       	adiw	r26, 0x02	; 2
      1ae:	ed 91       	ld	r30, X+
      1b0:	fc 91       	ld	r31, X
      1b2:	13 97       	sbiw	r26, 0x03	; 3
      1b4:	fb 83       	std	Y+3, r31	; 0x03
      1b6:	ea 83       	std	Y+2, r30	; 0x02
+	pxNewListItem->pxNext->pxPrevious = pxNewListItem;
      1b8:	d5 83       	std	Z+5, r29	; 0x05
      1ba:	c4 83       	std	Z+4, r28	; 0x04
+	pxNewListItem->pxPrevious = pxIterator;
      1bc:	bd 83       	std	Y+5, r27	; 0x05
      1be:	ac 83       	std	Y+4, r26	; 0x04
+	pxIterator->pxNext = pxNewListItem;
      1c0:	13 96       	adiw	r26, 0x03	; 3
      1c2:	dc 93       	st	X, r29
      1c4:	ce 93       	st	-X, r28
      1c6:	12 97       	sbiw	r26, 0x02	; 2
+
+	/* Remember which list the item is in.  This allows fast removal of the
+	item later. */
+	pxNewListItem->pvContainer = ( void * ) pxList;
      1c8:	99 87       	std	Y+9, r25	; 0x09
      1ca:	88 87       	std	Y+8, r24	; 0x08
+
+	( pxList->uxNumberOfItems )++;
      1cc:	fc 01       	movw	r30, r24
      1ce:	20 81       	ld	r18, Z
      1d0:	2f 5f       	subi	r18, 0xFF	; 255
      1d2:	20 83       	st	Z, r18
+}
      1d4:	df 91       	pop	r29
      1d6:	cf 91       	pop	r28
      1d8:	08 95       	ret
 
 000001da <uxListRemove>:
+/*-----------------------------------------------------------*/
+
+UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove )
+{
      1da:	cf 93       	push	r28
      1dc:	df 93       	push	r29
      1de:	fc 01       	movw	r30, r24
+/* The list item knows which list it is in.  Obtain the list from the list
+item. */
+List_t * const pxList = ( List_t * ) pxItemToRemove->pvContainer;
      1e0:	a0 85       	ldd	r26, Z+8	; 0x08
      1e2:	b1 85       	ldd	r27, Z+9	; 0x09
+
+	pxItemToRemove->pxNext->pxPrevious = pxItemToRemove->pxPrevious;
      1e4:	c2 81       	ldd	r28, Z+2	; 0x02
      1e6:	d3 81       	ldd	r29, Z+3	; 0x03
      1e8:	84 81       	ldd	r24, Z+4	; 0x04
      1ea:	95 81       	ldd	r25, Z+5	; 0x05
      1ec:	9d 83       	std	Y+5, r25	; 0x05
      1ee:	8c 83       	std	Y+4, r24	; 0x04
+	pxItemToRemove->pxPrevious->pxNext = pxItemToRemove->pxNext;
      1f0:	c4 81       	ldd	r28, Z+4	; 0x04
      1f2:	d5 81       	ldd	r29, Z+5	; 0x05
      1f4:	82 81       	ldd	r24, Z+2	; 0x02
      1f6:	93 81       	ldd	r25, Z+3	; 0x03
      1f8:	9b 83       	std	Y+3, r25	; 0x03
      1fa:	8a 83       	std	Y+2, r24	; 0x02
+
+	/* Only used during decision coverage testing. */
+	mtCOVERAGE_TEST_DELAY();
+
+	/* Make sure the index is left pointing to a valid item. */
+	if( pxList->pxIndex == pxItemToRemove )
      1fc:	11 96       	adiw	r26, 0x01	; 1
      1fe:	8d 91       	ld	r24, X+
      200:	9c 91       	ld	r25, X
@@ -279,22 +433,40 @@ Disassembly of section .text:
      204:	e8 17       	cp	r30, r24
      206:	f9 07       	cpc	r31, r25
      208:	31 f4       	brne	.+12     	; 0x216 <uxListRemove+0x3c>
+	{
+		pxList->pxIndex = pxItemToRemove->pxPrevious;
      20a:	84 81       	ldd	r24, Z+4	; 0x04
      20c:	95 81       	ldd	r25, Z+5	; 0x05
      20e:	12 96       	adiw	r26, 0x02	; 2
      210:	9c 93       	st	X, r25
      212:	8e 93       	st	-X, r24
      214:	11 97       	sbiw	r26, 0x01	; 1
+	else
+	{
+		mtCOVERAGE_TEST_MARKER();
+	}
+
+	pxItemToRemove->pvContainer = NULL;
      216:	11 86       	std	Z+9, r1	; 0x09
      218:	10 86       	std	Z+8, r1	; 0x08
+	( pxList->uxNumberOfItems )--;
      21a:	8c 91       	ld	r24, X
      21c:	81 50       	subi	r24, 0x01	; 1
      21e:	8c 93       	st	X, r24
+
+	return pxList->uxNumberOfItems;
+}
      220:	df 91       	pop	r29
      222:	cf 91       	pop	r28
      224:	08 95       	ret
 
 00000226 <prvSetupTimerInterrupt>:
+	return pdTRUE;
+}
+/*-----------------------------------------------------------*/
+
+void vPortEndScheduler( void )
+{
      226:	10 92 89 00 	sts	0x0089, r1	; 0x800089 <__TEXT_REGION_LENGTH__+0x7f8089>
      22a:	89 ef       	ldi	r24, 0xF9	; 249
      22c:	80 93 88 00 	sts	0x0088, r24	; 0x800088 <__TEXT_REGION_LENGTH__+0x7f8088>
@@ -467,6 +639,12 @@ Disassembly of section .text:
      37a:	08 95       	ret
 
 0000037c <vPortYield>:
+ * can use a naked attribute.
+ */
+void vPortYield( void ) __attribute__ ( ( naked ) );
+void vPortYield( void )
+{
+	portSAVE_CONTEXT();
      37c:	0f 92       	push	r0
      37e:	0f b6       	in	r0, 0x3f	; 63
      380:	f8 94       	cli
@@ -509,7 +687,9 @@ Disassembly of section .text:
      3ce:	0d 92       	st	X+, r0
      3d0:	0e b6       	in	r0, 0x3e	; 62
      3d2:	0d 92       	st	X+, r0
+	vTaskSwitchContext();
      3d4:	0e 94 64 08 	call	0x10c8	; 0x10c8 <vTaskSwitchContext>
+	portRESTORE_CONTEXT();
      3d8:	a0 91 70 07 	lds	r26, 0x0770	; 0x800770 <pxCurrentTCB>
      3dc:	b0 91 71 07 	lds	r27, 0x0771	; 0x800771 <pxCurrentTCB+0x1>
      3e0:	cd 91       	ld	r28, X+
@@ -550,9 +730,17 @@ Disassembly of section .text:
      426:	0f 90       	pop	r0
      428:	0f be       	out	0x3f, r0	; 63
      42a:	0f 90       	pop	r0
+
+	asm volatile ( "ret" );
      42c:	08 95       	ret
 
 0000042e <vPortYieldFromTick>:
+ * call comes from the tick ISR.
+ */
+void vPortYieldFromTick( void ) __attribute__ ( ( naked ) );
+void vPortYieldFromTick( void )
+{
+	portSAVE_CONTEXT();
      42e:	0f 92       	push	r0
      430:	0f b6       	in	r0, 0x3f	; 63
      432:	f8 94       	cli
@@ -595,9 +783,14 @@ Disassembly of section .text:
      480:	0d 92       	st	X+, r0
      482:	0e b6       	in	r0, 0x3e	; 62
      484:	0d 92       	st	X+, r0
+	if( xTaskIncrementTick() != pdFALSE )
      486:	0e 94 eb 06 	call	0xdd6	; 0xdd6 <xTaskIncrementTick>
      48a:	81 11       	cpse	r24, r1
+	{
+		vTaskSwitchContext();
      48c:	0e 94 64 08 	call	0x10c8	; 0x10c8 <vTaskSwitchContext>
+	}
+	portRESTORE_CONTEXT();
      490:	a0 91 70 07 	lds	r26, 0x0770	; 0x800770 <pxCurrentTCB>
      494:	b0 91 71 07 	lds	r27, 0x0771	; 0x800771 <pxCurrentTCB+0x1>
      498:	cd 91       	ld	r28, X+
@@ -638,13 +831,28 @@ Disassembly of section .text:
      4de:	0f 90       	pop	r0
      4e0:	0f be       	out	0x3f, r0	; 63
      4e2:	0f 90       	pop	r0
+
+	asm volatile ( "ret" );
      4e4:	08 95       	ret
 
 000004e6 <__vector_11>:
+	
+	
+	void TIMER1_COMPA_vect( void ) __attribute__ ( ( signal, naked ) );
+	void TIMER1_COMPA_vect( void )
+	{
+		vPortYieldFromTick();
      4e6:	0e 94 17 02 	call	0x42e	; 0x42e <vPortYieldFromTick>
+		asm volatile ( "reti" );
      4ea:	18 95       	reti
 
 000004ec <prvIsQueueEmpty>:
+		}
+	}
+	portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );
+
+	return xReturn;
+}
      4ec:	0f b6       	in	r0, 0x3f	; 63
      4ee:	f8 94       	cli
      4f0:	0f 92       	push	r0
@@ -1088,6 +1296,10 @@ Disassembly of section .text:
      878:	08 95       	ret
 
 0000087a <xQueueGenericReceive>:
+/*-----------------------------------------------------------*/
+
+BaseType_t xQueueGenericReceive( QueueHandle_t xQueue, void * const pvBuffer, TickType_t xTicksToWait, const BaseType_t xJustPeeking )
+{
      87a:	8f 92       	push	r8
      87c:	9f 92       	push	r9
      87e:	bf 92       	push	r11
@@ -1109,67 +1321,154 @@ Disassembly of section .text:
      89e:	5d 83       	std	Y+5, r21	; 0x05
      8a0:	4c 83       	std	Y+4, r20	; 0x04
      8a2:	b2 2e       	mov	r11, r18
+BaseType_t xEntryTimeSet = pdFALSE;
      8a4:	e1 2c       	mov	r14, r1
+	statements within the function itself.  This is done in the interest
+	of execution time efficiency. */
+
+	for( ;; )
+	{
+		taskENTER_CRITICAL();
      8a6:	0f b6       	in	r0, 0x3f	; 63
      8a8:	f8 94       	cli
      8aa:	0f 92       	push	r0
+		{
+			const UBaseType_t uxMessagesWaiting = pxQueue->uxMessagesWaiting;
      8ac:	f8 01       	movw	r30, r16
      8ae:	f2 8c       	ldd	r15, Z+26	; 0x1a
+
+			/* Is there data in the queue now?  To be running the calling task
+			must be the highest priority task wanting to access the queue. */
+			if( uxMessagesWaiting > ( UBaseType_t ) 0 )
      8b0:	ff 20       	and	r15, r15
      8b2:	41 f1       	breq	.+80     	; 0x904 <__stack+0x5>
+			{
+				/* Remember the read position in case the queue is only being
+				peeked. */
+				pcOriginalReadPosition = pxQueue->u.pcReadFrom;
      8b4:	86 80       	ldd	r8, Z+6	; 0x06
      8b6:	97 80       	ldd	r9, Z+7	; 0x07
+
+				prvCopyDataFromQueue( pxQueue, pvBuffer );
      8b8:	b6 01       	movw	r22, r12
      8ba:	c8 01       	movw	r24, r16
      8bc:	0e 94 da 02 	call	0x5b4	; 0x5b4 <prvCopyDataFromQueue>
+
+				if( xJustPeeking == pdFALSE )
      8c0:	b1 10       	cpse	r11, r1
      8c2:	0f c0       	rjmp	.+30     	; 0x8e2 <xQueueGenericReceive+0x68>
+				{
+					traceQUEUE_RECEIVE( pxQueue );
+
+					/* Actually removing data, not just peeking. */
+					pxQueue->uxMessagesWaiting = uxMessagesWaiting - 1;
      8c4:	fa 94       	dec	r15
      8c6:	f8 01       	movw	r30, r16
      8c8:	f2 8e       	std	Z+26, r15	; 0x1a
+							mtCOVERAGE_TEST_MARKER();
+						}
+					}
+					#endif /* configUSE_MUTEXES */
+
+					if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == pdFALSE )
      8ca:	80 85       	ldd	r24, Z+8	; 0x08
      8cc:	88 23       	and	r24, r24
      8ce:	b1 f0       	breq	.+44     	; 0x8fc <xQueueGenericReceive+0x82>
+					{
+						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != pdFALSE )
      8d0:	c8 01       	movw	r24, r16
      8d2:	08 96       	adiw	r24, 0x08	; 8
      8d4:	0e 94 ca 08 	call	0x1194	; 0x1194 <xTaskRemoveFromEventList>
      8d8:	88 23       	and	r24, r24
      8da:	81 f0       	breq	.+32     	; 0x8fc <xQueueGenericReceive+0x82>
+						{
+							queueYIELD_IF_USING_PREEMPTION();
      8dc:	0e 94 be 01 	call	0x37c	; 0x37c <vPortYield>
      8e0:	0d c0       	rjmp	.+26     	; 0x8fc <xQueueGenericReceive+0x82>
+				{
+					traceQUEUE_PEEK( pxQueue );
+
+					/* The data is not being removed, so reset the read
+					pointer. */
+					pxQueue->u.pcReadFrom = pcOriginalReadPosition;
      8e2:	f8 01       	movw	r30, r16
      8e4:	97 82       	std	Z+7, r9	; 0x07
      8e6:	86 82       	std	Z+6, r8	; 0x06
+
+					/* The data is being left in the queue, so see if there are
+					any other tasks waiting for the data. */
+					if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == pdFALSE )
      8e8:	81 89       	ldd	r24, Z+17	; 0x11
      8ea:	88 23       	and	r24, r24
      8ec:	39 f0       	breq	.+14     	; 0x8fc <xQueueGenericReceive+0x82>
+					{
+						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != pdFALSE )
      8ee:	c8 01       	movw	r24, r16
      8f0:	41 96       	adiw	r24, 0x11	; 17
      8f2:	0e 94 ca 08 	call	0x1194	; 0x1194 <xTaskRemoveFromEventList>
      8f6:	81 11       	cpse	r24, r1
+						{
+							/* The task waiting has a higher priority than this task. */
+							queueYIELD_IF_USING_PREEMPTION();
      8f8:	0e 94 be 01 	call	0x37c	; 0x37c <vPortYield>
+					{
+						mtCOVERAGE_TEST_MARKER();
+					}
+				}
+
+				taskEXIT_CRITICAL();
      8fc:	0f 90       	pop	r0
      8fe:	0f be       	out	0x3f, r0	; 63
+				return pdPASS;
      900:	81 e0       	ldi	r24, 0x01	; 1
      902:	53 c0       	rjmp	.+166    	; 0x9aa <__stack+0xab>
+			}
+			else
+			{
+				if( xTicksToWait == ( TickType_t ) 0 )
      904:	8c 81       	ldd	r24, Y+4	; 0x04
      906:	9d 81       	ldd	r25, Y+5	; 0x05
      908:	89 2b       	or	r24, r25
      90a:	21 f4       	brne	.+8      	; 0x914 <__stack+0x15>
+				{
+					/* The queue was empty and no block time is specified (or
+					the block time has expired) so leave now. */
+					taskEXIT_CRITICAL();
      90c:	0f 90       	pop	r0
      90e:	0f be       	out	0x3f, r0	; 63
+					traceQUEUE_RECEIVE_FAILED( pxQueue );
+					return errQUEUE_EMPTY;
      910:	80 e0       	ldi	r24, 0x00	; 0
      912:	4b c0       	rjmp	.+150    	; 0x9aa <__stack+0xab>
+				}
+				else if( xEntryTimeSet == pdFALSE )
      914:	e1 10       	cpse	r14, r1
      916:	06 c0       	rjmp	.+12     	; 0x924 <__stack+0x25>
+				{
+					/* The queue was empty and a block time was specified so
+					configure the timeout structure. */
+					vTaskSetTimeOutState( &xTimeOut );
      918:	ce 01       	movw	r24, r28
      91a:	01 96       	adiw	r24, 0x01	; 1
      91c:	0e 94 12 09 	call	0x1224	; 0x1224 <vTaskSetTimeOutState>
+					xEntryTimeSet = pdTRUE;
      920:	ee 24       	eor	r14, r14
      922:	e3 94       	inc	r14
+					/* Entry time was already set. */
+					mtCOVERAGE_TEST_MARKER();
+				}
+			}
+		}
+		taskEXIT_CRITICAL();
      924:	0f 90       	pop	r0
      926:	0f be       	out	0x3f, r0	; 63
+
+		/* Interrupts and other tasks can send to and receive from the queue
+		now the critical section has been exited. */
+
+		vTaskSuspendAll();
      928:	0e 94 e5 06 	call	0xdca	; 0xdca <vTaskSuspendAll>
+		prvLockQueue( pxQueue );
      92c:	0f b6       	in	r0, 0x3f	; 63
      92e:	f8 94       	cli
      930:	0f 92       	push	r0
@@ -1185,6 +1484,9 @@ Disassembly of section .text:
      944:	16 8e       	std	Z+30, r1	; 0x1e
      946:	0f 90       	pop	r0
      948:	0f be       	out	0x3f, r0	; 63
+
+		/* Update the timeout state to see if it has expired yet. */
+		if( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) == pdFALSE )
      94a:	be 01       	movw	r22, r28
      94c:	6c 5f       	subi	r22, 0xFC	; 252
      94e:	7f 4f       	sbci	r23, 0xFF	; 255
@@ -1193,35 +1495,71 @@ Disassembly of section .text:
      954:	0e 94 1d 09 	call	0x123a	; 0x123a <xTaskCheckForTimeOut>
      958:	81 11       	cpse	r24, r1
      95a:	1b c0       	rjmp	.+54     	; 0x992 <__stack+0x93>
+		{
+			if( prvIsQueueEmpty( pxQueue ) != pdFALSE )
      95c:	c8 01       	movw	r24, r16
      95e:	0e 94 76 02 	call	0x4ec	; 0x4ec <prvIsQueueEmpty>
      962:	88 23       	and	r24, r24
      964:	81 f0       	breq	.+32     	; 0x986 <__stack+0x87>
+						mtCOVERAGE_TEST_MARKER();
+					}
+				}
+				#endif
+
+				vTaskPlaceOnEventList( &( pxQueue->xTasksWaitingToReceive ), xTicksToWait );
      966:	6c 81       	ldd	r22, Y+4	; 0x04
      968:	7d 81       	ldd	r23, Y+5	; 0x05
      96a:	c8 01       	movw	r24, r16
      96c:	41 96       	adiw	r24, 0x11	; 17
      96e:	0e 94 b8 08 	call	0x1170	; 0x1170 <vTaskPlaceOnEventList>
+				prvUnlockQueue( pxQueue );
      972:	c8 01       	movw	r24, r16
      974:	0e 94 f4 02 	call	0x5e8	; 0x5e8 <prvUnlockQueue>
+				if( xTaskResumeAll() == pdFALSE )
      978:	0e 94 a5 07 	call	0xf4a	; 0xf4a <xTaskResumeAll>
      97c:	81 11       	cpse	r24, r1
      97e:	93 cf       	rjmp	.-218    	; 0x8a6 <xQueueGenericReceive+0x2c>
+				{
+					portYIELD_WITHIN_API();
      980:	0e 94 be 01 	call	0x37c	; 0x37c <vPortYield>
      984:	90 cf       	rjmp	.-224    	; 0x8a6 <xQueueGenericReceive+0x2c>
+				}
+			}
+			else
+			{
+				/* Try again. */
+				prvUnlockQueue( pxQueue );
      986:	c8 01       	movw	r24, r16
      988:	0e 94 f4 02 	call	0x5e8	; 0x5e8 <prvUnlockQueue>
+				( void ) xTaskResumeAll();
      98c:	0e 94 a5 07 	call	0xf4a	; 0xf4a <xTaskResumeAll>
      990:	8a cf       	rjmp	.-236    	; 0x8a6 <xQueueGenericReceive+0x2c>
+			}
+		}
+		else
+		{
+			prvUnlockQueue( pxQueue );
      992:	c8 01       	movw	r24, r16
      994:	0e 94 f4 02 	call	0x5e8	; 0x5e8 <prvUnlockQueue>
+			( void ) xTaskResumeAll();
      998:	0e 94 a5 07 	call	0xf4a	; 0xf4a <xTaskResumeAll>
+
+			if( prvIsQueueEmpty( pxQueue ) != pdFALSE )
      99c:	c8 01       	movw	r24, r16
      99e:	0e 94 76 02 	call	0x4ec	; 0x4ec <prvIsQueueEmpty>
      9a2:	88 23       	and	r24, r24
      9a4:	09 f4       	brne	.+2      	; 0x9a8 <__stack+0xa9>
      9a6:	7f cf       	rjmp	.-258    	; 0x8a6 <xQueueGenericReceive+0x2c>
+			{
+				traceQUEUE_RECEIVE_FAILED( pxQueue );
+				return errQUEUE_EMPTY;
      9a8:	80 e0       	ldi	r24, 0x00	; 0
+			{
+				mtCOVERAGE_TEST_MARKER();
+			}
+		}
+	}
+}
      9aa:	0f 90       	pop	r0
      9ac:	0f 90       	pop	r0
      9ae:	0f 90       	pop	r0
@@ -1241,6 +1579,12 @@ Disassembly of section .text:
      9ca:	08 95       	ret
 
 000009cc <prvResetNextTaskUnblockTime>:
+	{
+		xReturn = pdFALSE;
+	}
+
+	return xReturn;
+}
      9cc:	e0 91 38 07 	lds	r30, 0x0738	; 0x800738 <pxDelayedTaskList>
      9d0:	f0 91 39 07 	lds	r31, 0x0739	; 0x800739 <pxDelayedTaskList+0x1>
      9d4:	80 81       	ld	r24, Z
@@ -2160,9 +2504,16 @@ Disassembly of section .text:
     1222:	08 95       	ret
 
 00001224 <vTaskSetTimeOutState>:
+/*-----------------------------------------------------------*/
+
+void vTaskSetTimeOutState( TimeOut_t * const pxTimeOut )
+{
+	configASSERT( pxTimeOut );
+	pxTimeOut->xOverflowCount = xNumOfOverflows;
     1224:	20 91 12 07 	lds	r18, 0x0712	; 0x800712 <xNumOfOverflows>
     1228:	fc 01       	movw	r30, r24
     122a:	20 83       	st	Z, r18
+	pxTimeOut->xTimeOnEntering = xTickCount;
     122c:	20 91 17 07 	lds	r18, 0x0717	; 0x800717 <xTickCount>
     1230:	30 91 18 07 	lds	r19, 0x0718	; 0x800718 <xTickCount+0x1>
     1234:	32 83       	std	Z+2, r19	; 0x02
@@ -2170,11 +2521,26 @@ Disassembly of section .text:
     1238:	08 95       	ret
 
 0000123a <xTaskCheckForTimeOut>:
+BaseType_t xReturn;
+
+	configASSERT( pxTimeOut );
+	configASSERT( pxTicksToWait );
+
+	taskENTER_CRITICAL();
     123a:	0f b6       	in	r0, 0x3f	; 63
     123c:	f8 94       	cli
     123e:	0f 92       	push	r0
+	{
+		/* Minor optimisation.  The tick count cannot change in this block. */
+		const TickType_t xConstTickCount = xTickCount;
     1240:	40 91 17 07 	lds	r20, 0x0717	; 0x800717 <xTickCount>
     1244:	50 91 18 07 	lds	r21, 0x0718	; 0x800718 <xTickCount+0x1>
+			}
+			else
+		#endif
+
+		#if ( INCLUDE_vTaskSuspend == 1 )
+			if( *pxTicksToWait == portMAX_DELAY )
     1248:	db 01       	movw	r26, r22
     124a:	2d 91       	ld	r18, X+
     124c:	3c 91       	ld	r19, X
@@ -2182,6 +2548,12 @@ Disassembly of section .text:
     1250:	bf ef       	ldi	r27, 0xFF	; 255
     1252:	3b 07       	cpc	r19, r27
     1254:	19 f1       	breq	.+70     	; 0x129c <xTaskCheckForTimeOut+0x62>
+				xReturn = pdFALSE;
+			}
+			else
+		#endif
+
+		if( ( xNumOfOverflows != pxTimeOut->xOverflowCount ) && ( xConstTickCount >= pxTimeOut->xTimeOnEntering ) ) /*lint !e525 Indentation preferred as is to make code within pre-processor directives clearer. */
     1256:	dc 01       	movw	r26, r24
     1258:	fc 91       	ld	r31, X
     125a:	e0 91 12 07 	lds	r30, 0x0712	; 0x800712 <xNumOfOverflows>
@@ -2194,6 +2566,12 @@ Disassembly of section .text:
     126a:	4e 17       	cp	r20, r30
     126c:	5f 07       	cpc	r21, r31
     126e:	c0 f4       	brcc	.+48     	; 0x12a0 <xTaskCheckForTimeOut+0x66>
+			vTaskSetTimeOut() was called.  It must have wrapped all the way
+			around and gone past again. This passed since vTaskSetTimeout()
+			was called. */
+			xReturn = pdTRUE;
+		}
+		else if( ( ( TickType_t ) ( xConstTickCount - pxTimeOut->xTimeOnEntering ) ) < *pxTicksToWait ) /*lint !e961 Explicit casting is only redundant with some compilers, whereas others require it to prevent integer conversion errors. */
     1270:	dc 01       	movw	r26, r24
     1272:	11 96       	adiw	r26, 0x01	; 1
     1274:	ed 91       	ld	r30, X+
@@ -2206,36 +2584,79 @@ Disassembly of section .text:
     1282:	b3 07       	cpc	r27, r19
     1284:	78 f4       	brcc	.+30     	; 0x12a4 <xTaskCheckForTimeOut+0x6a>
     1286:	db 01       	movw	r26, r22
+		{
+			/* Not a genuine timeout. Adjust parameters for time remaining. */
+			*pxTicksToWait -= ( xConstTickCount - pxTimeOut->xTimeOnEntering );
     1288:	e4 1b       	sub	r30, r20
     128a:	f5 0b       	sbc	r31, r21
     128c:	2e 0f       	add	r18, r30
     128e:	3f 1f       	adc	r19, r31
     1290:	2d 93       	st	X+, r18
     1292:	3c 93       	st	X, r19
+			vTaskSetTimeOutState( pxTimeOut );
     1294:	0e 94 12 09 	call	0x1224	; 0x1224 <vTaskSetTimeOutState>
+			xReturn = pdFALSE;
     1298:	80 e0       	ldi	r24, 0x00	; 0
     129a:	05 c0       	rjmp	.+10     	; 0x12a6 <xTaskCheckForTimeOut+0x6c>
+			if( *pxTicksToWait == portMAX_DELAY )
+			{
+				/* If INCLUDE_vTaskSuspend is set to 1 and the block time
+				specified is the maximum block time then the task should block
+				indefinitely, and therefore never time out. */
+				xReturn = pdFALSE;
     129c:	80 e0       	ldi	r24, 0x00	; 0
     129e:	03 c0       	rjmp	.+6      	; 0x12a6 <xTaskCheckForTimeOut+0x6c>
+			/* The tick count is greater than the time at which
+			vTaskSetTimeout() was called, but has also overflowed since
+			vTaskSetTimeOut() was called.  It must have wrapped all the way
+			around and gone past again. This passed since vTaskSetTimeout()
+			was called. */
+			xReturn = pdTRUE;
     12a0:	81 e0       	ldi	r24, 0x01	; 1
     12a2:	01 c0       	rjmp	.+2      	; 0x12a6 <xTaskCheckForTimeOut+0x6c>
+			vTaskSetTimeOutState( pxTimeOut );
+			xReturn = pdFALSE;
+		}
+		else
+		{
+			xReturn = pdTRUE;
     12a4:	81 e0       	ldi	r24, 0x01	; 1
+		}
+	}
+	taskEXIT_CRITICAL();
     12a6:	0f 90       	pop	r0
     12a8:	0f be       	out	0x3f, r0	; 63
+
+	return xReturn;
+}
     12aa:	08 95       	ret
 
 000012ac <vTaskMissedYield>:
+/*-----------------------------------------------------------*/
+
+void vTaskMissedYield( void )
+{
+	xYieldPending = pdTRUE;
     12ac:	81 e0       	ldi	r24, 0x01	; 1
     12ae:	80 93 13 07 	sts	0x0713, r24	; 0x800713 <xYieldPending>
     12b2:	08 95       	ret
 
 000012b4 <vMoter1Task>:
+TaskHandle_t xMotor2_Handle = NULL;
+
+
+
+//모터1 제어를위한 Task 구현
+void vMoter1Task(void *pvParameters){
     12b4:	cf 93       	push	r28
     12b6:	df 93       	push	r29
     12b8:	00 d0       	rcall	.+0      	; 0x12ba <vMoter1Task+0x6>
     12ba:	00 d0       	rcall	.+0      	; 0x12bc <vMoter1Task+0x8>
     12bc:	cd b7       	in	r28, 0x3d	; 61
     12be:	de b7       	in	r29, 0x3e	; 62
+	int32_t ml_data;
+	while(1){
+		if(xQueueReceive(xMoter1Queue,&ml_data,portMAX_DELAY)==pdPASS){
     12c0:	20 e0       	ldi	r18, 0x00	; 0
     12c2:	4f ef       	ldi	r20, 0xFF	; 255
     12c4:	5f ef       	ldi	r21, 0xFF	; 255
@@ -2247,6 +2668,9 @@ Disassembly of section .text:
     12d4:	0e 94 3d 04 	call	0x87a	; 0x87a <xQueueGenericReceive>
     12d8:	81 30       	cpi	r24, 0x01	; 1
     12da:	91 f7       	brne	.-28     	; 0x12c0 <vMoter1Task+0xc>
+			//여기에 모터 함수 집어넣으면 된다
+//			LED_test(ml_data);
+			motor_W1(ml_data);
     12dc:	69 81       	ldd	r22, Y+1	; 0x01
     12de:	7a 81       	ldd	r23, Y+2	; 0x02
     12e0:	8b 81       	ldd	r24, Y+3	; 0x03
@@ -2255,12 +2679,21 @@ Disassembly of section .text:
     12e8:	eb cf       	rjmp	.-42     	; 0x12c0 <vMoter1Task+0xc>
 
 000012ea <vMoter2Task>:
+		}
+	}
+}
+
+//모터2 제어를위한 Task 구현
+void vMoter2Task(void *pvParameters){
     12ea:	cf 93       	push	r28
     12ec:	df 93       	push	r29
     12ee:	00 d0       	rcall	.+0      	; 0x12f0 <vMoter2Task+0x6>
     12f0:	00 d0       	rcall	.+0      	; 0x12f2 <vMoter2Task+0x8>
     12f2:	cd b7       	in	r28, 0x3d	; 61
     12f4:	de b7       	in	r29, 0x3e	; 62
+	int32_t ml_data;
+	while(1){
+		if(xQueueReceive(xMoter2Queue,&ml_data,portMAX_DELAY)==pdPASS){
     12f6:	20 e0       	ldi	r18, 0x00	; 0
     12f8:	4f ef       	ldi	r20, 0xFF	; 255
     12fa:	5f ef       	ldi	r21, 0xFF	; 255
@@ -2272,6 +2705,9 @@ Disassembly of section .text:
     130a:	0e 94 3d 04 	call	0x87a	; 0x87a <xQueueGenericReceive>
     130e:	81 30       	cpi	r24, 0x01	; 1
     1310:	91 f7       	brne	.-28     	; 0x12f6 <vMoter2Task+0xc>
+			//여기에 모터 함수 집어넣으면 된다
+			//LED_test(ml_data);
+			motor_W2(ml_data);
     1312:	69 81       	ldd	r22, Y+1	; 0x01
     1314:	7a 81       	ldd	r23, Y+2	; 0x02
     1316:	8b 81       	ldd	r24, Y+3	; 0x03
@@ -2280,13 +2716,28 @@ Disassembly of section .text:
     131e:	eb cf       	rjmp	.-42     	; 0x12f6 <vMoter2Task+0xc>
 
 00001320 <vRxTask>:
+
+/**
+ * @brief Rx Task: 수신 링 버퍼 -> FreeRTOS 큐
+ * ISR의 링 버퍼에서 바이트를 가져와 처리 태스크용 큐로 전송합니다.
+ */
+void vRxTask(void *pvParameters) {
     1320:	cf 93       	push	r28
     1322:	df 93       	push	r29
     1324:	1f 92       	push	r1
     1326:	cd b7       	in	r28, 0x3d	; 61
     1328:	de b7       	in	r29, 0x3e	; 62
+    uint8_t received_char;
+    
+    while (1) {
+        // uart_rx()는 내부적으로 vTaskDelay(1)을 포함하여
+        // 데이터가 없을 때 CPU를 양보합니다.
+        received_char = uart_rx(); 
     132a:	0e 94 b6 0d 	call	0x1b6c	; 0x1b6c <uart_rx>
     132e:	89 83       	std	Y+1, r24	; 0x01
+        
+        // 데이터를 FreeRTOS 큐로 전송 (최대 10ms 대기)
+        if (xQueueSend(xUartQueue, &received_char, pdMS_TO_TICKS(10)) != pdPASS) {
     1330:	20 e0       	ldi	r18, 0x00	; 0
     1332:	4a e0       	ldi	r20, 0x0A	; 10
     1334:	50 e0       	ldi	r21, 0x00	; 0
@@ -2299,6 +2750,12 @@ Disassembly of section .text:
     1348:	f0 cf       	rjmp	.-32     	; 0x132a <vRxTask+0xa>
 
 0000134a <vProtocolTask>:
+
+/**
+ * @brief Protocol Task: 큐 -> 패킷 조립 -> 패킷 처리
+ * vRxTask가 큐에 넣은 바이트들을 수신하여 프로토콜 패킷을 조립하고 처리합니다.
+ */
+void vProtocolTask(void *pvParameters) {
     134a:	cf 93       	push	r28
     134c:	df 93       	push	r29
     134e:	cd b7       	in	r28, 0x3d	; 61
@@ -2309,12 +2766,42 @@ Disassembly of section .text:
     1358:	de bf       	out	0x3e, r29	; 62
     135a:	0f be       	out	0x3f, r0	; 63
     135c:	cd bf       	out	0x3d, r28	; 61
+    uint8_t received_char;
+    uint8_t packet_buffer[PROTOCOL_BUFFER_SIZE];
+    uint8_t packet_index = 0;
+    
+    // 수신 상태 (IDLE: '$' 대기, RECEIVING: '\n' 대기)
+    enum { STATE_IDLE, STATE_RECEIVING } state = STATE_IDLE;
     135e:	10 e0       	ldi	r17, 0x00	; 0
+ * vRxTask가 큐에 넣은 바이트들을 수신하여 프로토콜 패킷을 조립하고 처리합니다.
+ */
+void vProtocolTask(void *pvParameters) {
+    uint8_t received_char;
+    uint8_t packet_buffer[PROTOCOL_BUFFER_SIZE];
+    uint8_t packet_index = 0;
     1360:	00 e0       	ldi	r16, 0x00	; 0
     1362:	03 c0       	rjmp	.+6      	; 0x136a <vProtocolTask+0x20>
+                // 패킷 조립
+                if (packet_index < PROTOCOL_BUFFER_SIZE) {
+                    packet_buffer[packet_index++] = received_char;
+                } else {
+                    // 버퍼 오버플로우. 패킷 무시하고 리셋
+                    state = STATE_IDLE;
     1364:	10 e0       	ldi	r17, 0x00	; 0
     1366:	01 c0       	rjmp	.+2      	; 0x136a <vProtocolTask+0x20>
+                }
+            } 
+            else if (state == STATE_RECEIVING) {
+                // 패킷 조립
+                if (packet_index < PROTOCOL_BUFFER_SIZE) {
+                    packet_buffer[packet_index++] = received_char;
     1368:	0f 2d       	mov	r16, r15
+    enum { STATE_IDLE, STATE_RECEIVING } state = STATE_IDLE;
+
+    while (1) {
+
+        // 1. FreeRTOS 큐에서 데이터 수신 (무기한 대기)
+        if (xQueueReceive(xUartQueue, &received_char, portMAX_DELAY) == pdPASS) {
     136a:	20 e0       	ldi	r18, 0x00	; 0
     136c:	4f ef       	ldi	r20, 0xFF	; 255
     136e:	5f ef       	ldi	r21, 0xFF	; 255
@@ -2326,19 +2813,39 @@ Disassembly of section .text:
     137e:	0e 94 3d 04 	call	0x87a	; 0x87a <xQueueGenericReceive>
     1382:	81 30       	cpi	r24, 0x01	; 1
     1384:	91 f7       	brne	.-28     	; 0x136a <vProtocolTask+0x20>
+            
+            if (state == STATE_IDLE) {
     1386:	11 11       	cpse	r17, r1
     1388:	07 c0       	rjmp	.+14     	; 0x1398 <vProtocolTask+0x4e>
+                // '$' (시작 문자)를 기다림
+                if (received_char == '$') {
     138a:	89 81       	ldd	r24, Y+1	; 0x01
     138c:	84 32       	cpi	r24, 0x24	; 36
     138e:	69 f7       	brne	.-38     	; 0x136a <vProtocolTask+0x20>
+                    packet_index = 0;
+                    packet_buffer[packet_index++] = received_char;
     1390:	8a 83       	std	Y+2, r24	; 0x02
+                    state = STATE_RECEIVING;
     1392:	11 e0       	ldi	r17, 0x01	; 1
+            
+            if (state == STATE_IDLE) {
+                // '$' (시작 문자)를 기다림
+                if (received_char == '$') {
+                    packet_index = 0;
+                    packet_buffer[packet_index++] = received_char;
     1394:	01 e0       	ldi	r16, 0x01	; 1
     1396:	e9 cf       	rjmp	.-46     	; 0x136a <vProtocolTask+0x20>
+                    state = STATE_RECEIVING;
+                }
+            } 
+            else if (state == STATE_RECEIVING) {
     1398:	11 30       	cpi	r17, 0x01	; 1
     139a:	39 f7       	brne	.-50     	; 0x136a <vProtocolTask+0x20>
+                // 패킷 조립
+                if (packet_index < PROTOCOL_BUFFER_SIZE) {
     139c:	00 31       	cpi	r16, 0x10	; 16
     139e:	10 f7       	brcc	.-60     	; 0x1364 <vProtocolTask+0x1a>
+                    packet_buffer[packet_index++] = received_char;
     13a0:	ff 24       	eor	r15, r15
     13a2:	f3 94       	inc	r15
     13a4:	f0 0e       	add	r15, r16
@@ -2350,42 +2857,84 @@ Disassembly of section .text:
     13b0:	e0 0f       	add	r30, r16
     13b2:	f1 1d       	adc	r31, r1
     13b4:	80 83       	st	Z, r24
+                    state = STATE_IDLE;
+                    continue;
+                }
+
+                // '\n' (종료 문자) 수신 시
+                if (received_char == '\n') {
     13b6:	8a 30       	cpi	r24, 0x0A	; 10
     13b8:	b9 f6       	brne	.-82     	; 0x1368 <vProtocolTask+0x1e>
+                    // Master의 요청 처리 
+                    process_packet(packet_buffer, packet_index);
     13ba:	6f 2d       	mov	r22, r15
     13bc:	ce 01       	movw	r24, r28
     13be:	02 96       	adiw	r24, 0x02	; 2
     13c0:	0e 94 92 0b 	call	0x1724	; 0x1724 <process_packet>
+                }
+            } 
+            else if (state == STATE_RECEIVING) {
+                // 패킷 조립
+                if (packet_index < PROTOCOL_BUFFER_SIZE) {
+                    packet_buffer[packet_index++] = received_char;
     13c4:	0f 2d       	mov	r16, r15
+                // '\n' (종료 문자) 수신 시
+                if (received_char == '\n') {
+                    // Master의 요청 처리 
+                    process_packet(packet_buffer, packet_index);
+                    // 다음 패킷을 위해 IDLE 상태로 복귀
+                    state = STATE_IDLE;
     13c6:	10 e0       	ldi	r17, 0x00	; 0
     13c8:	d0 cf       	rjmp	.-96     	; 0x136a <vProtocolTask+0x20>
 
 000013ca <main>:
+}
+
+
+int main(void) {
+    // UART 드라이버 초기화
+    uart_init(BAUD);
     13ca:	60 e8       	ldi	r22, 0x80	; 128
     13cc:	75 e2       	ldi	r23, 0x25	; 37
     13ce:	80 e0       	ldi	r24, 0x00	; 0
     13d0:	90 e0       	ldi	r25, 0x00	; 0
     13d2:	0e 94 78 0d 	call	0x1af0	; 0x1af0 <uart_init>
+	//모터 초기화
+	motor_init();
     13d6:	0e 94 53 0a 	call	0x14a6	; 0x14a6 <motor_init>
+	timer0_init();
     13da:	0e 94 ac 0c 	call	0x1958	; 0x1958 <timer0_init>
+    
+
+	
+    // 큐 생성: 64개의 8비트(uint8_t) 요소를 저장
+    // 수신 버퍼링을 위해 넉넉하게 설정
+    xUartQueue = xQueueCreate(64, sizeof(uint8_t));
     13de:	40 e0       	ldi	r20, 0x00	; 0
     13e0:	61 e0       	ldi	r22, 0x01	; 1
     13e2:	80 e4       	ldi	r24, 0x40	; 64
     13e4:	0e 94 81 03 	call	0x702	; 0x702 <xQueueGenericCreate>
     13e8:	90 93 7b 07 	sts	0x077B, r25	; 0x80077b <xUartQueue+0x1>
     13ec:	80 93 7a 07 	sts	0x077A, r24	; 0x80077a <xUartQueue>
+	
+	xMoter1Queue = xQueueCreate(8, sizeof(int32_t));
     13f0:	40 e0       	ldi	r20, 0x00	; 0
     13f2:	64 e0       	ldi	r22, 0x04	; 4
     13f4:	88 e0       	ldi	r24, 0x08	; 8
     13f6:	0e 94 81 03 	call	0x702	; 0x702 <xQueueGenericCreate>
     13fa:	90 93 79 07 	sts	0x0779, r25	; 0x800779 <xMoter1Queue+0x1>
     13fe:	80 93 78 07 	sts	0x0778, r24	; 0x800778 <xMoter1Queue>
+	
+	xMoter2Queue = xQueueCreate(8, sizeof(int32_t));
     1402:	40 e0       	ldi	r20, 0x00	; 0
     1404:	64 e0       	ldi	r22, 0x04	; 4
     1406:	88 e0       	ldi	r24, 0x08	; 8
     1408:	0e 94 81 03 	call	0x702	; 0x702 <xQueueGenericCreate>
     140c:	90 93 77 07 	sts	0x0777, r25	; 0x800777 <xMoter2Queue+0x1>
     1410:	80 93 76 07 	sts	0x0776, r24	; 0x800776 <xMoter2Queue>
+
+	
+    if (xUartQueue != NULL && xMoter1Queue != NULL) {
     1414:	80 91 7a 07 	lds	r24, 0x077A	; 0x80077a <xUartQueue>
     1418:	90 91 7b 07 	lds	r25, 0x077B	; 0x80077b <xUartQueue+0x1>
     141c:	89 2b       	or	r24, r25
@@ -2395,6 +2944,9 @@ Disassembly of section .text:
     1426:	90 91 79 07 	lds	r25, 0x0779	; 0x800779 <xMoter1Queue+0x1>
     142a:	89 2b       	or	r24, r25
     142c:	d9 f1       	breq	.+118    	; 0x14a4 <main+0xda>
+
+        // Rx Task 생성 (높은 우선순위: 수신 데이터를 빠르게 링 버퍼에서 큐로 이동)
+        xTaskCreate(
     142e:	e1 2c       	mov	r14, r1
     1430:	f1 2c       	mov	r15, r1
     1432:	02 e0       	ldi	r16, 0x02	; 2
@@ -2407,6 +2959,12 @@ Disassembly of section .text:
     1440:	80 e9       	ldi	r24, 0x90	; 144
     1442:	99 e0       	ldi	r25, 0x09	; 9
     1444:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
+            tskIDLE_PRIORITY + 2,
+            NULL
+        );
+
+        // Protocol Task 생성 (상대적으로 낮은 우선순위: 패킷 처리)
+        xTaskCreate(
     1448:	01 e0       	ldi	r16, 0x01	; 1
     144a:	20 e0       	ldi	r18, 0x00	; 0
     144c:	30 e0       	ldi	r19, 0x00	; 0
@@ -2417,6 +2975,12 @@ Disassembly of section .text:
     1456:	85 ea       	ldi	r24, 0xA5	; 165
     1458:	99 e0       	ldi	r25, 0x09	; 9
     145a:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
+            NULL
+        );
+		
+		// Rx Task 생성 (높은 우선순위: 수신 데이터를 빠르게 링 버퍼에서 큐로 이동)
+
+		xTaskCreate(
     145e:	0f 2e       	mov	r0, r31
     1460:	f4 e7       	ldi	r31, 0x74	; 116
     1462:	ef 2e       	mov	r14, r31
@@ -2433,6 +2997,12 @@ Disassembly of section .text:
     1478:	8a e5       	ldi	r24, 0x5A	; 90
     147a:	99 e0       	ldi	r25, 0x09	; 9
     147c:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
+			tskIDLE_PRIORITY,
+			&xMotor1_Handle
+		);
+		
+		
+		xTaskCreate(
     1480:	0f 2e       	mov	r0, r31
     1482:	f2 e7       	ldi	r31, 0x72	; 114
     1484:	ef 2e       	mov	r14, r31
@@ -2448,6 +3018,12 @@ Disassembly of section .text:
     1498:	85 e7       	ldi	r24, 0x75	; 117
     149a:	99 e0       	ldi	r25, 0x09	; 9
     149c:	0e 94 67 06 	call	0xcce	; 0xcce <xTaskCreate>
+			&xMotor2_Handle
+		);
+		
+		
+        // FreeRTOS 스케줄러 시작
+        vTaskStartScheduler();
     14a0:	0e 94 bb 06 	call	0xd76	; 0xd76 <vTaskStartScheduler>
     14a4:	ff cf       	rjmp	.-2      	; 0x14a4 <main+0xda>
 
@@ -2659,7 +3235,7 @@ void motor_W2(int32_t data){
     15c4:	e1 04       	cpc	r14, r1
     15c6:	f1 04       	cpc	r15, r1
     15c8:	e4 f0       	brlt	.+56     	; 0x1602 <motor_W2+0x60>
-		C = 0.603; // 작은 양에 대해 이전 보정 계수 사용
+		C = 0.580; // 작은 양에 대해 이전 보정 계수 사용
 	}else if(data<=200){
     15ca:	29 ec       	ldi	r18, 0xC9	; 201
     15cc:	c2 16       	cp	r12, r18
@@ -2697,13 +3273,13 @@ void motor_W2(int32_t data){
     15fe:	f0 2d       	mov	r31, r0
     1600:	15 c0       	rjmp	.+42     	; 0x162c <motor_W2+0x8a>
 	}else if(data<=150){
-		C = 0.603; // 작은 양에 대해 이전 보정 계수 사용
+		C = 0.580; // 작은 양에 대해 이전 보정 계수 사용
     1602:	0f 2e       	mov	r0, r31
-    1604:	f5 e3       	ldi	r31, 0x35	; 53
+    1604:	f1 ee       	ldi	r31, 0xE1	; 225
     1606:	cf 2e       	mov	r12, r31
-    1608:	fe e5       	ldi	r31, 0x5E	; 94
+    1608:	fa e7       	ldi	r31, 0x7A	; 122
     160a:	df 2e       	mov	r13, r31
-    160c:	fa e1       	ldi	r31, 0x1A	; 26
+    160c:	f4 e1       	ldi	r31, 0x14	; 20
     160e:	ef 2e       	mov	r14, r31
     1610:	ff e3       	ldi	r31, 0x3F	; 63
     1612:	ff 2e       	mov	r15, r31
@@ -2802,21 +3378,53 @@ void all_stop_motor(){
     169c:	08 95       	ret
 
 0000169e <calculate_checksum>:
+ * @brief PDF 프로토콜에 정의된 체크섬을 계산합니다. 
+ * @param buffer '$'를 제외한 패킷 데이터 (ID부터 Checksum 앞까지)
+ * @param length 체크섬 계산에 포함될 바이트 수
+ * @return 계산된 체크섬
+ */
+uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
     169e:	ac 01       	movw	r20, r24
+	uint8_t sum = 0;
+	for (uint8_t i = 0; i < length; i++) {
     16a0:	90 e0       	ldi	r25, 0x00	; 0
+ * @param buffer '$'를 제외한 패킷 데이터 (ID부터 Checksum 앞까지)
+ * @param length 체크섬 계산에 포함될 바이트 수
+ * @return 계산된 체크섬
+ */
+uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
+	uint8_t sum = 0;
     16a2:	80 e0       	ldi	r24, 0x00	; 0
+	for (uint8_t i = 0; i < length; i++) {
     16a4:	06 c0       	rjmp	.+12     	; 0x16b2 <calculate_checksum+0x14>
+		sum += buffer[i];
     16a6:	fa 01       	movw	r30, r20
     16a8:	e9 0f       	add	r30, r25
     16aa:	f1 1d       	adc	r31, r1
     16ac:	20 81       	ld	r18, Z
     16ae:	82 0f       	add	r24, r18
+ * @param length 체크섬 계산에 포함될 바이트 수
+ * @return 계산된 체크섬
+ */
+uint8_t calculate_checksum(uint8_t *buffer, uint8_t length) {
+	uint8_t sum = 0;
+	for (uint8_t i = 0; i < length; i++) {
     16b0:	9f 5f       	subi	r25, 0xFF	; 255
     16b2:	96 17       	cp	r25, r22
     16b4:	c0 f3       	brcs	.-16     	; 0x16a6 <calculate_checksum+0x8>
+		sum += buffer[i];
+	}
+	return sum;
+}
     16b6:	08 95       	ret
 
 000016b8 <send_response>:
+ * @param slave_id 응답하는 Slave ID
+ * @param cmd 'W' 또는 'R'
+ * @param addr 처리한 주소
+ * @param data 'R' 명령의 경우 읽은 값, 'W' 명령의 경우 쓴 값
+ */
+void send_response(uint8_t slave_id, uint8_t cmd, uint8_t addr, int32_t data) {
     16b8:	0f 93       	push	r16
     16ba:	1f 93       	push	r17
     16bc:	cf 93       	push	r28
@@ -2829,24 +3437,50 @@ void all_stop_motor(){
     16ca:	de bf       	out	0x3e, r29	; 62
     16cc:	0f be       	out	0x3f, r0	; 63
     16ce:	cd bf       	out	0x3d, r28	; 61
+	
+	// 1. 응답 프레임 크기 10바이트로 변경
+	uint8_t response[10];
+	uint8_t checksum;
+
+	response[FRAME_IDX_START] = '$';
     16d0:	94 e2       	ldi	r25, 0x24	; 36
     16d2:	99 83       	std	Y+1, r25	; 0x01
+	response[FRAME_IDX_SlaveID] = slave_id;
     16d4:	8a 83       	std	Y+2, r24	; 0x02
+	response[FRAME_IDX_CMD] = cmd;
     16d6:	6b 83       	std	Y+3, r22	; 0x03
+	response[FRAME_IDX_ADDR] = addr;
     16d8:	4c 83       	std	Y+4, r20	; 0x04
+	
+	// 2. 32비트 데이터를 4바이트로 분리 (Big-Endian)
+	response[FRAME_IDX_W_DATA_D0] = (uint8_t)(data >> 24); // D0 (MSB)
     16da:	3d 83       	std	Y+5, r19	; 0x05
+	response[FRAME_IDX_W_DATA_D1] = (uint8_t)(data >> 16); // D1
     16dc:	2e 83       	std	Y+6, r18	; 0x06
+	response[FRAME_IDX_W_DATA_D2] = (uint8_t)(data >> 8);  // D2
     16de:	1f 83       	std	Y+7, r17	; 0x07
+	response[FRAME_IDX_W_DATA_D3] = (uint8_t)(data & 0xFF);  // D3 (LSB)
     16e0:	08 87       	std	Y+8, r16	; 0x08
+
+	// 3. 체크섬 계산 범위 변경 (ID부터 D3까지, 총 7바이트)
+	checksum = calculate_checksum(&response[1], 7);
     16e2:	67 e0       	ldi	r22, 0x07	; 7
     16e4:	ce 01       	movw	r24, r28
     16e6:	02 96       	adiw	r24, 0x02	; 2
     16e8:	0e 94 4f 0b 	call	0x169e	; 0x169e <calculate_checksum>
+	
+	// 4. 체크섬과 종료 문자 위치 변경
+	response[FRAME_IDX_W_CHECKSUM] = checksum;
     16ec:	89 87       	std	Y+9, r24	; 0x09
+	response[FRAME_IDX_W_END] = '\n';
     16ee:	8a e0       	ldi	r24, 0x0A	; 10
     16f0:	8a 87       	std	Y+10, r24	; 0x0a
+
+	// 5. 전송 루프 범위 변경 (10바이트)
+	for (uint8_t i = 0; i < 10; i++) {
     16f2:	10 e0       	ldi	r17, 0x00	; 0
     16f4:	0a c0       	rjmp	.+20     	; 0x170a <send_response+0x52>
+		uart_tx(response[i]);
     16f6:	e1 e0       	ldi	r30, 0x01	; 1
     16f8:	f0 e0       	ldi	r31, 0x00	; 0
     16fa:	ec 0f       	add	r30, r28
@@ -2855,9 +3489,18 @@ void all_stop_motor(){
     1700:	f1 1d       	adc	r31, r1
     1702:	80 81       	ld	r24, Z
     1704:	0e 94 8f 0d 	call	0x1b1e	; 0x1b1e <uart_tx>
+	// 4. 체크섬과 종료 문자 위치 변경
+	response[FRAME_IDX_W_CHECKSUM] = checksum;
+	response[FRAME_IDX_W_END] = '\n';
+
+	// 5. 전송 루프 범위 변경 (10바이트)
+	for (uint8_t i = 0; i < 10; i++) {
     1708:	1f 5f       	subi	r17, 0xFF	; 255
     170a:	1a 30       	cpi	r17, 0x0A	; 10
     170c:	a0 f3       	brcs	.-24     	; 0x16f6 <send_response+0x3e>
+		uart_tx(response[i]);
+	}
+}
     170e:	2a 96       	adiw	r28, 0x0a	; 10
     1710:	0f b6       	in	r0, 0x3f	; 63
     1712:	f8 94       	cli
@@ -2871,6 +3514,12 @@ void all_stop_motor(){
     1722:	08 95       	ret
 
 00001724 <process_packet>:
+/**
+ * @brief 수신된 패킷을 파싱하고 처리합니다. (Slave 로직) 
+ * @param buffer 수신된 전체 패킷 ('$'...'\n' 포함)
+ * @param length 패킷의 전체 길이
+ */
+void process_packet(uint8_t *buffer, uint8_t length) {
     1724:	8f 92       	push	r8
     1726:	9f 92       	push	r9
     1728:	af 92       	push	r10
@@ -2887,53 +3536,117 @@ void all_stop_motor(){
     173e:	00 d0       	rcall	.+0      	; 0x1740 <process_packet+0x1c>
     1740:	cd b7       	in	r28, 0x3d	; 61
     1742:	de b7       	in	r29, 0x3e	; 62
+	// 'R' 요청 자체는 6바이트일 수 있지만, 프로토콜 일관성을 위해
+	// 'R' 응답도 4바이트 데이터를 포함하도록 변경하는 것을 가정합니다.
+	// 여기서는 'W' 명령만 10바이트라고 가정하고, 'R'은 6바이트로 유지해 봅니다.
+	// (이 부분은 프로토콜 정책에 따라 달라집니다)
+
+	if (length < 6) {
     1744:	66 30       	cpi	r22, 0x06	; 6
     1746:	08 f4       	brcc	.+2      	; 0x174a <process_packet+0x26>
     1748:	9b c0       	rjmp	.+310    	; 0x1880 <process_packet+0x15c>
+		return;
+	}
+
+	uint8_t slave_id = buffer[FRAME_IDX_SlaveID]; // ID
     174a:	fc 01       	movw	r30, r24
     174c:	f1 80       	ldd	r15, Z+1	; 0x01
+	if (slave_id != MY_SLAVE_ID) {
     174e:	f1 e0       	ldi	r31, 0x01	; 1
     1750:	ff 12       	cpse	r15, r31
     1752:	96 c0       	rjmp	.+300    	; 0x1880 <process_packet+0x15c>
+		return;
+	}
+
+	uint8_t cmd = buffer[FRAME_IDX_CMD];  // Cmd
     1754:	fc 01       	movw	r30, r24
     1756:	e2 80       	ldd	r14, Z+2	; 0x02
+	uint8_t addr = buffer[FRAME_IDX_ADDR]; // Addr
     1758:	d3 80       	ldd	r13, Z+3	; 0x03
+	uint8_t received_checksum;
+	uint8_t calculated_checksum;
+	uint8_t data_len_for_checksum;
+
+	if (cmd == 'W') {
     175a:	f7 e5       	ldi	r31, 0x57	; 87
     175c:	ef 12       	cpse	r14, r31
     175e:	07 c0       	rjmp	.+14     	; 0x176e <process_packet+0x4a>
+		// 'W' 명령은 10바이트여야 함 ($ ID W Addr D0 D1 D2 D3 Chk \n)
+		if (length != 10) {
     1760:	6a 30       	cpi	r22, 0x0A	; 10
     1762:	09 f0       	breq	.+2      	; 0x1766 <process_packet+0x42>
     1764:	8d c0       	rjmp	.+282    	; 0x1880 <process_packet+0x15c>
+			return; // 'W' 명령 길이 불일치
+		}
+		
+		// 체크섬은 9번째 바이트 (인덱스 8)
+		received_checksum = buffer[FRAME_IDX_W_CHECKSUM];
     1766:	fc 01       	movw	r30, r24
     1768:	c0 84       	ldd	r12, Z+8	; 0x08
+		
+		// 체크섬 계산 범위: ID, Cmd, Addr, D0, D1, D2, D3 (총 7바이트)
+		data_len_for_checksum = 7;
     176a:	67 e0       	ldi	r22, 0x07	; 7
     176c:	09 c0       	rjmp	.+18     	; 0x1780 <process_packet+0x5c>
+		
+	} else if (cmd == 'R') {
     176e:	f2 e5       	ldi	r31, 0x52	; 82
     1770:	ef 12       	cpse	r14, r31
     1772:	86 c0       	rjmp	.+268    	; 0x1880 <process_packet+0x15c>
+		// 'R' 명령은 6바이트로 유지한다고 가정 ($ ID R Addr Chk \n)
+		if (length != 6) {
     1774:	66 30       	cpi	r22, 0x06	; 6
     1776:	09 f0       	breq	.+2      	; 0x177a <process_packet+0x56>
     1778:	83 c0       	rjmp	.+262    	; 0x1880 <process_packet+0x15c>
+			return; // 'R' 명령 길이 불일치
+		}
+		
+		received_checksum = buffer[FRAME_IDX_R_CHECKSUM];
     177a:	fc 01       	movw	r30, r24
     177c:	c4 80       	ldd	r12, Z+4	; 0x04
+		data_len_for_checksum = 3; // ID, Cmd, Addr
     177e:	63 e0       	ldi	r22, 0x03	; 3
     1780:	8c 01       	movw	r16, r24
+		
+	} else {
+		return; // 알 수 없는 명령
+	}
+	
+	calculated_checksum = calculate_checksum(&buffer[1], data_len_for_checksum);
     1782:	01 96       	adiw	r24, 0x01	; 1
     1784:	0e 94 4f 0b 	call	0x169e	; 0x169e <calculate_checksum>
+
+	if (received_checksum != calculated_checksum) {
     1788:	c8 12       	cpse	r12, r24
     178a:	7a c0       	rjmp	.+244    	; 0x1880 <process_packet+0x15c>
+		return; // 체크섬 오류
+	}
+	
+	// --- 체크섬 통과 ---
+	
+	int32_t data_32bit = 0; // 32비트 데이터를 저장할 변수
     178c:	19 82       	std	Y+1, r1	; 0x01
     178e:	1a 82       	std	Y+2, r1	; 0x02
     1790:	1b 82       	std	Y+3, r1	; 0x03
     1792:	1c 82       	std	Y+4, r1	; 0x04
+
+	if (cmd == 'W') {
     1794:	f7 e5       	ldi	r31, 0x57	; 87
     1796:	ef 12       	cpse	r14, r31
     1798:	58 c0       	rjmp	.+176    	; 0x184a <process_packet+0x126>
+		// 4. (핵심) 4바이트(D0~D3)를 32비트 int로 조립 (Big-Endian)
+		uint8_t d0 = buffer[FRAME_IDX_W_DATA_D0]; // 0x01 (MSB)
     179a:	f8 01       	movw	r30, r16
     179c:	84 80       	ldd	r8, Z+4	; 0x04
+		uint8_t d1 = buffer[FRAME_IDX_W_DATA_D1]; // 0x02
     179e:	95 81       	ldd	r25, Z+5	; 0x05
+		uint8_t d2 = buffer[FRAME_IDX_W_DATA_D2]; // 0x03
     17a0:	46 81       	ldd	r20, Z+6	; 0x06
+		uint8_t d3 = buffer[FRAME_IDX_W_DATA_D3]; // 0x04 (LSB)
     17a2:	27 81       	ldd	r18, Z+7	; 0x07
+		
+		// (uint32_t)로 먼저 캐스팅 후 비트 이동, 마지막에 int32_t로 변환
+		data_32bit = ((int32_t)((uint32_t)d0 << 24) |
     17a4:	91 2c       	mov	r9, r1
     17a6:	a1 2c       	mov	r10, r1
     17a8:	b1 2c       	mov	r11, r1
@@ -2941,6 +3654,7 @@ void all_stop_motor(){
     17ac:	aa 24       	eor	r10, r10
     17ae:	99 24       	eor	r9, r9
     17b0:	88 24       	eor	r8, r8
+		((uint32_t)d1 << 16) |
     17b2:	89 2f       	mov	r24, r25
     17b4:	90 e0       	ldi	r25, 0x00	; 0
     17b6:	a0 e0       	ldi	r26, 0x00	; 0
@@ -2948,10 +3662,18 @@ void all_stop_motor(){
     17ba:	dc 01       	movw	r26, r24
     17bc:	99 27       	eor	r25, r25
     17be:	88 27       	eor	r24, r24
+		uint8_t d1 = buffer[FRAME_IDX_W_DATA_D1]; // 0x02
+		uint8_t d2 = buffer[FRAME_IDX_W_DATA_D2]; // 0x03
+		uint8_t d3 = buffer[FRAME_IDX_W_DATA_D3]; // 0x04 (LSB)
+		
+		// (uint32_t)로 먼저 캐스팅 후 비트 이동, 마지막에 int32_t로 변환
+		data_32bit = ((int32_t)((uint32_t)d0 << 24) |
     17c0:	88 29       	or	r24, r8
     17c2:	99 29       	or	r25, r9
     17c4:	aa 29       	or	r26, r10
     17c6:	bb 29       	or	r27, r11
+		((uint32_t)d1 << 16) |
+		((uint32_t)d2 << 8)  |
     17c8:	50 e0       	ldi	r21, 0x00	; 0
     17ca:	60 e0       	ldi	r22, 0x00	; 0
     17cc:	70 e0       	ldi	r23, 0x00	; 0
@@ -2959,18 +3681,38 @@ void all_stop_motor(){
     17d0:	65 2f       	mov	r22, r21
     17d2:	54 2f       	mov	r21, r20
     17d4:	44 27       	eor	r20, r20
+		uint8_t d2 = buffer[FRAME_IDX_W_DATA_D2]; // 0x03
+		uint8_t d3 = buffer[FRAME_IDX_W_DATA_D3]; // 0x04 (LSB)
+		
+		// (uint32_t)로 먼저 캐스팅 후 비트 이동, 마지막에 int32_t로 변환
+		data_32bit = ((int32_t)((uint32_t)d0 << 24) |
+		((uint32_t)d1 << 16) |
     17d6:	84 2b       	or	r24, r20
     17d8:	95 2b       	or	r25, r21
     17da:	a6 2b       	or	r26, r22
     17dc:	b7 2b       	or	r27, r23
+		((uint32_t)d2 << 8)  |
     17de:	82 2b       	or	r24, r18
+		uint8_t d1 = buffer[FRAME_IDX_W_DATA_D1]; // 0x02
+		uint8_t d2 = buffer[FRAME_IDX_W_DATA_D2]; // 0x03
+		uint8_t d3 = buffer[FRAME_IDX_W_DATA_D3]; // 0x04 (LSB)
+		
+		// (uint32_t)로 먼저 캐스팅 후 비트 이동, 마지막에 int32_t로 변환
+		data_32bit = ((int32_t)((uint32_t)d0 << 24) |
     17e0:	89 83       	std	Y+1, r24	; 0x01
     17e2:	9a 83       	std	Y+2, r25	; 0x02
     17e4:	ab 83       	std	Y+3, r26	; 0x03
     17e6:	bc 83       	std	Y+4, r27	; 0x04
+		//}
+		
+		/* 6. 큐로 데이터 전송
+		/* 명령 수행
+		**/
+		if (addr == 1) {
     17e8:	f1 e0       	ldi	r31, 0x01	; 1
     17ea:	df 12       	cpse	r13, r31
     17ec:	0d c0       	rjmp	.+26     	; 0x1808 <process_packet+0xe4>
+			xQueueSendToBack(xMoter1Queue, &data_32bit, portMAX_DELAY);
     17ee:	20 e0       	ldi	r18, 0x00	; 0
     17f0:	4f ef       	ldi	r20, 0xFF	; 255
     17f2:	5f ef       	ldi	r21, 0xFF	; 255
@@ -2981,9 +3723,11 @@ void all_stop_motor(){
     17fe:	90 91 79 07 	lds	r25, 0x0779	; 0x800779 <xMoter1Queue+0x1>
     1802:	0e 94 ab 03 	call	0x756	; 0x756 <xQueueGenericSend>
     1806:	17 c0       	rjmp	.+46     	; 0x1836 <process_packet+0x112>
+		} else if (addr == 2) {
     1808:	22 e0       	ldi	r18, 0x02	; 2
     180a:	d2 12       	cpse	r13, r18
     180c:	0d c0       	rjmp	.+26     	; 0x1828 <process_packet+0x104>
+			xQueueSendToBack(xMoter2Queue, &data_32bit, portMAX_DELAY);
     180e:	20 e0       	ldi	r18, 0x00	; 0
     1810:	4f ef       	ldi	r20, 0xFF	; 255
     1812:	5f ef       	ldi	r21, 0xFF	; 255
@@ -2994,11 +3738,20 @@ void all_stop_motor(){
     181e:	90 91 77 07 	lds	r25, 0x0777	; 0x800777 <xMoter2Queue+0x1>
     1822:	0e 94 ab 03 	call	0x756	; 0x756 <xQueueGenericSend>
     1826:	07 c0       	rjmp	.+14     	; 0x1836 <process_packet+0x112>
+		}else if(addr == 3){
     1828:	83 e0       	ldi	r24, 0x03	; 3
     182a:	d8 12       	cpse	r13, r24
     182c:	04 c0       	rjmp	.+8      	; 0x1836 <process_packet+0x112>
+			//타이머를 초기화해서 기존에 지난 시간을 초기화
+			timer0_init();
     182e:	0e 94 ac 0c 	call	0x1958	; 0x1958 <timer0_init>
+			//모든 모터 정지
+			all_stop_motor();
     1832:	0e 94 48 0b 	call	0x1690	; 0x1690 <all_stop_motor>
+		}
+	
+		// 7. 'W' 응답 (수정된 send_response 호출)
+		send_response(slave_id, cmd, addr, data_32bit);
     1836:	09 81       	ldd	r16, Y+1	; 0x01
     1838:	1a 81       	ldd	r17, Y+2	; 0x02
     183a:	2b 81       	ldd	r18, Y+3	; 0x03
@@ -3008,12 +3761,17 @@ void all_stop_motor(){
     1842:	8f 2d       	mov	r24, r15
     1844:	0e 94 5c 0b 	call	0x16b8	; 0x16b8 <send_response>
     1848:	1b c0       	rjmp	.+54     	; 0x1880 <process_packet+0x15c>
+
+		} else if (cmd == 'R') {
     184a:	e2 e5       	ldi	r30, 0x52	; 82
     184c:	ee 12       	cpse	r14, r30
     184e:	18 c0       	rjmp	.+48     	; 0x1880 <process_packet+0x15c>
+		// 'R' 명령은 g_device_registers에서 32비트 값을 읽어 응답
+		if (addr < 4) {
     1850:	f3 e0       	ldi	r31, 0x03	; 3
     1852:	fd 15       	cp	r31, r13
     1854:	60 f0       	brcs	.+24     	; 0x186e <process_packet+0x14a>
+			data_32bit = g_device_registers[addr];
     1856:	ed 2d       	mov	r30, r13
     1858:	f0 e0       	ldi	r31, 0x00	; 0
     185a:	e4 58       	subi	r30, 0x84	; 132
@@ -3026,6 +3784,10 @@ void all_stop_motor(){
     1868:	9a 83       	std	Y+2, r25	; 0x02
     186a:	ab 83       	std	Y+3, r26	; 0x03
     186c:	bc 83       	std	Y+4, r27	; 0x04
+		}
+		
+		// 7. 'R' 응답 (수정된 send_response 호출)
+		send_response(slave_id, cmd, addr, data_32bit);
     186e:	09 81       	ldd	r16, Y+1	; 0x01
     1870:	1a 81       	ldd	r17, Y+2	; 0x02
     1872:	2b 81       	ldd	r18, Y+3	; 0x03
@@ -3034,6 +3796,7 @@ void all_stop_motor(){
     1878:	6e 2d       	mov	r22, r14
     187a:	8f 2d       	mov	r24, r15
     187c:	0e 94 5c 0b 	call	0x16b8	; 0x16b8 <send_response>
+	}
     1880:	0f 90       	pop	r0
     1882:	0f 90       	pop	r0
     1884:	0f 90       	pop	r0
@@ -3053,6 +3816,12 @@ void all_stop_motor(){
     18a0:	08 95       	ret
 
 000018a2 <__vector_16>:
+	}
+
+	// 총 마이크로초 계산
+	// (오버플로우 횟수 * 256 + 현재 타이머값) * 타이머 틱당 μs
+	return ((m << 8) + t) * (64 / (F_CPU / 1000000UL));
+}
     18a2:	1f 92       	push	r1
     18a4:	0f 92       	push	r0
     18a6:	0f b6       	in	r0, 0x3f	; 63
@@ -3165,6 +3934,9 @@ void all_stop_motor(){
     19b2:	08 95       	ret
 
 000019b4 <delay>:
+
+// 딜레이 함수 (밀리초)
+void delay(double ms) {
     19b4:	8f 92       	push	r8
     19b6:	9f 92       	push	r9
     19b8:	af 92       	push	r10
@@ -3175,9 +3947,12 @@ void all_stop_motor(){
     19c2:	ff 92       	push	r15
     19c4:	4b 01       	movw	r8, r22
     19c6:	5c 01       	movw	r10, r24
+	uint32_t start = millis();
     19c8:	0e 94 c9 0c 	call	0x1992	; 0x1992 <millis>
     19cc:	6b 01       	movw	r12, r22
     19ce:	7c 01       	movw	r14, r24
+
+	while ((millis() - start) < ms) {
     19d0:	0e 94 c9 0c 	call	0x1992	; 0x1992 <millis>
     19d4:	6c 19       	sub	r22, r12
     19d6:	7d 09       	sbc	r23, r13
@@ -3189,6 +3964,8 @@ void all_stop_motor(){
     19e4:	0e 94 46 0e 	call	0x1c8c	; 0x1c8c <__cmpsf2>
     19e8:	88 23       	and	r24, r24
     19ea:	94 f3       	brlt	.-28     	; 0x19d0 <delay+0x1c>
+		// 대기
+	}
     19ec:	ff 90       	pop	r15
     19ee:	ef 90       	pop	r14
     19f0:	df 90       	pop	r13
@@ -3200,12 +3977,6 @@ void all_stop_motor(){
     19fc:	08 95       	ret
 
 000019fe <__vector_18>:
-volatile uint8_t rx_buffer[USART_RX_BUFFER_SIZE];
-volatile uint8_t rx_head = 0;
-volatile uint8_t rx_tail = 0;
-
-// 수신 완료 인터럽트 핸들러 (RX Complete)
-ISR(USART_RX_vect) {
     19fe:	1f 92       	push	r1
     1a00:	0f 92       	push	r0
     1a02:	0f b6       	in	r0, 0x3f	; 63
@@ -3217,9 +3988,7 @@ ISR(USART_RX_vect) {
     1a0e:	9f 93       	push	r25
     1a10:	ef 93       	push	r30
     1a12:	ff 93       	push	r31
-	uint8_t data = UDR0;
     1a14:	30 91 c6 00 	lds	r19, 0x00C6	; 0x8000c6 <__TEXT_REGION_LENGTH__+0x7f80c6>
-	uint8_t next_head = (rx_head + 1) % USART_RX_BUFFER_SIZE;
     1a18:	80 91 96 07 	lds	r24, 0x0796	; 0x800796 <rx_head>
     1a1c:	90 e0       	ldi	r25, 0x00	; 0
     1a1e:	01 96       	adiw	r24, 0x01	; 1
@@ -3231,24 +4000,15 @@ ISR(USART_RX_vect) {
     1a2a:	80 6c       	ori	r24, 0xC0	; 192
     1a2c:	9f 6f       	ori	r25, 0xFF	; 255
     1a2e:	01 96       	adiw	r24, 0x01	; 1
-
-	// 버퍼 오버플로우 방지
-	if (next_head == rx_tail) {
     1a30:	20 91 95 07 	lds	r18, 0x0795	; 0x800795 <rx_tail>
     1a34:	28 17       	cp	r18, r24
     1a36:	41 f0       	breq	.+16     	; 0x1a48 <__vector_18+0x4a>
-		return;
-	}
-
-	rx_buffer[rx_head] = data;
     1a38:	e0 91 96 07 	lds	r30, 0x0796	; 0x800796 <rx_head>
     1a3c:	f0 e0       	ldi	r31, 0x00	; 0
     1a3e:	e7 56       	subi	r30, 0x67	; 103
     1a40:	f8 4f       	sbci	r31, 0xF8	; 248
     1a42:	30 83       	st	Z, r19
-	rx_head = next_head;
     1a44:	80 93 96 07 	sts	0x0796, r24	; 0x800796 <rx_head>
-}
     1a48:	ff 91       	pop	r31
     1a4a:	ef 91       	pop	r30
     1a4c:	9f 91       	pop	r25
@@ -3262,10 +4022,6 @@ ISR(USART_RX_vect) {
     1a5c:	18 95       	reti
 
 00001a5e <__vector_19>:
-
-
-// 송신 데이터 레지스터 비어 있음 인터럽트 핸들러 (Data Register Empty)
-ISR(USART_UDRE_vect) {
     1a5e:	1f 92       	push	r1
     1a60:	0f 92       	push	r0
     1a62:	0f b6       	in	r0, 0x3f	; 63
@@ -3275,32 +4031,22 @@ ISR(USART_UDRE_vect) {
     1a6a:	9f 93       	push	r25
     1a6c:	ef 93       	push	r30
     1a6e:	ff 93       	push	r31
-	if (tx_head == tx_tail) {
     1a70:	90 91 98 07 	lds	r25, 0x0798	; 0x800798 <tx_head>
     1a74:	80 91 97 07 	lds	r24, 0x0797	; 0x800797 <tx_tail>
     1a78:	98 13       	cpse	r25, r24
     1a7a:	06 c0       	rjmp	.+12     	; 0x1a88 <__vector_19+0x2a>
-		// 송신할 데이터가 없으면 UDRE 인터럽트만 비활성화합니다.
-		UCSR0B &= ~(1 << UDRIE0);
     1a7c:	e1 ec       	ldi	r30, 0xC1	; 193
     1a7e:	f0 e0       	ldi	r31, 0x00	; 0
     1a80:	80 81       	ld	r24, Z
     1a82:	8f 7d       	andi	r24, 0xDF	; 223
     1a84:	80 83       	st	Z, r24
-		// 방향 전환은 TX Complete ISR에서 처리됩니다.
-		return;
     1a86:	14 c0       	rjmp	.+40     	; 0x1ab0 <__vector_19+0x52>
-	}
-
-	// 다음 데이터 송신
-	UDR0 = tx_buffer[tx_tail];
     1a88:	e0 91 97 07 	lds	r30, 0x0797	; 0x800797 <tx_tail>
     1a8c:	f0 e0       	ldi	r31, 0x00	; 0
     1a8e:	e7 52       	subi	r30, 0x27	; 39
     1a90:	f8 4f       	sbci	r31, 0xF8	; 248
     1a92:	80 81       	ld	r24, Z
     1a94:	80 93 c6 00 	sts	0x00C6, r24	; 0x8000c6 <__TEXT_REGION_LENGTH__+0x7f80c6>
-	tx_tail = (tx_tail + 1) % USART_TX_BUFFER_SIZE;
     1a98:	80 91 97 07 	lds	r24, 0x0797	; 0x800797 <tx_tail>
     1a9c:	90 e0       	ldi	r25, 0x00	; 0
     1a9e:	01 96       	adiw	r24, 0x01	; 1
@@ -3311,7 +4057,6 @@ ISR(USART_UDRE_vect) {
     1aa8:	9f 6f       	ori	r25, 0xFF	; 255
     1aaa:	01 96       	adiw	r24, 0x01	; 1
     1aac:	80 93 97 07 	sts	0x0797, r24	; 0x800797 <tx_tail>
-}
     1ab0:	ff 91       	pop	r31
     1ab2:	ef 91       	pop	r30
     1ab4:	9f 91       	pop	r25
@@ -3323,9 +4068,6 @@ ISR(USART_UDRE_vect) {
     1ac0:	18 95       	reti
 
 00001ac2 <__vector_20>:
-
-// 전송 완료 인터럽트 핸들러 (TX Complete) - RS-485 수신 모드 전환용
-ISR(USART_TX_vect) {
     1ac2:	1f 92       	push	r1
     1ac4:	0f 92       	push	r0
     1ac6:	0f b6       	in	r0, 0x3f	; 63
@@ -3333,22 +4075,13 @@ ISR(USART_TX_vect) {
     1aca:	11 24       	eor	r1, r1
     1acc:	8f 93       	push	r24
     1ace:	9f 93       	push	r25
-	// 마지막 데이터 전송 완료 후 호출됨.
-	// 링 버퍼가 비어 있는지 (UDRE ISR에서 마지막 데이터가 UDR0에 써진 후) 확인
-	if (tx_head == tx_tail) {
     1ad0:	90 91 98 07 	lds	r25, 0x0798	; 0x800798 <tx_head>
     1ad4:	80 91 97 07 	lds	r24, 0x0797	; 0x800797 <tx_tail>
     1ad8:	98 13       	cpse	r25, r24
     1ada:	03 c0       	rjmp	.+6      	; 0x1ae2 <__vector_20+0x20>
-		// 송신 버퍼가 완전히 비었으므로, RS-485를 수신 모드로 전환합니다.
-		// 수신 모드 전환 (DE=LOW, ~RE=LOW)
-		RS485_PORT &= ~((1 << RS485_DE_PIN) | (1 << RS485_RE_PIN));
     1adc:	8b b1       	in	r24, 0x0b	; 11
     1ade:	83 7f       	andi	r24, 0xF3	; 243
     1ae0:	8b b9       	out	0x0b, r24	; 11
-	}
-
-}
     1ae2:	9f 91       	pop	r25
     1ae4:	8f 91       	pop	r24
     1ae6:	0f 90       	pop	r0
@@ -3358,42 +4091,19 @@ ISR(USART_TX_vect) {
     1aee:	18 95       	reti
 
 00001af0 <uart_init>:
-// 4. UART/RS-485 드라이버 구현
-// -----------------------------------------------------------
-
-void uart_init(uint32_t baud) {
-	// 보율 설정
-	UBRR0H = (uint8_t)(UBRR_VALUE >> 8);
     1af0:	10 92 c5 00 	sts	0x00C5, r1	; 0x8000c5 <__TEXT_REGION_LENGTH__+0x7f80c5>
-	UBRR0L = (uint8_t)UBRR_VALUE;
     1af4:	87 e6       	ldi	r24, 0x67	; 103
     1af6:	80 93 c4 00 	sts	0x00C4, r24	; 0x8000c4 <__TEXT_REGION_LENGTH__+0x7f80c4>
-	
-	// RX/TX, RXCIE0 활성화
-	// TXCIE0 (TX Complete Interrupt Enable) 활성화 추가
-	UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0) | (1 << TXCIE0);
     1afa:	88 ed       	ldi	r24, 0xD8	; 216
     1afc:	80 93 c1 00 	sts	0x00C1, r24	; 0x8000c1 <__TEXT_REGION_LENGTH__+0x7f80c1>
-	
-	// 8N1 설정
-	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
     1b00:	86 e0       	ldi	r24, 0x06	; 6
     1b02:	80 93 c2 00 	sts	0x00C2, r24	; 0x8000c2 <__TEXT_REGION_LENGTH__+0x7f80c2>
-	
-	// RS-485 핀 초기화 및 출력 설정
-	RS485_DDR |= (1 << RS485_DE_PIN) | (1 << RS485_RE_PIN);
     1b06:	8a b1       	in	r24, 0x0a	; 10
     1b08:	8c 60       	ori	r24, 0x0C	; 12
     1b0a:	8a b9       	out	0x0a, r24	; 10
-	
-	// 기본 상태: 수신 모드 (DE=LOW, ~RE=LOW)
-	RS485_PORT &= ~((1 << RS485_DE_PIN) | (1 << RS485_RE_PIN));
     1b0c:	8b b1       	in	r24, 0x0b	; 11
     1b0e:	83 7f       	andi	r24, 0xF3	; 243
     1b10:	8b b9       	out	0x0b, r24	; 11
-
-	// TXC 플래그를 미리 클리어합니다 (1을 써서 클리어).
-	UCSR0A |= (1 << TXC0);
     1b12:	e0 ec       	ldi	r30, 0xC0	; 192
     1b14:	f0 e0       	ldi	r31, 0x00	; 0
     1b16:	80 81       	ld	r24, Z
@@ -3402,23 +4112,11 @@ void uart_init(uint32_t baud) {
     1b1c:	08 95       	ret
 
 00001b1e <uart_tx>:
-}
-
-void uart_tx(uint8_t data) {
     1b1e:	cf 93       	push	r28
     1b20:	c8 2f       	mov	r28, r24
-	uint8_t next_head;
-	
-	// 1. 송신 모드 활성화 (데이터를 버퍼에 넣기 전에 즉시 TX 모드로 전환)
-	// (DE=HIGH, ~RE=HIGH)
-	RS485_PORT |= (1 << RS485_DE_PIN) | (1 << RS485_RE_PIN);
     1b22:	8b b1       	in	r24, 0x0b	; 11
     1b24:	8c 60       	ori	r24, 0x0C	; 12
     1b26:	8b b9       	out	0x0b, r24	; 11
-	
-	// 2. 링 버퍼에 쓰기 (Non-blocking: FreeRTOS Task를 Block)
-	while (1) {
-		next_head = (tx_head + 1) % USART_TX_BUFFER_SIZE;
     1b28:	80 91 98 07 	lds	r24, 0x0798	; 0x800798 <tx_head>
     1b2c:	90 e0       	ldi	r25, 0x00	; 0
     1b2e:	01 96       	adiw	r24, 0x01	; 1
@@ -3428,76 +4126,41 @@ void uart_tx(uint8_t data) {
     1b36:	01 97       	sbiw	r24, 0x01	; 1
     1b38:	9f 6f       	ori	r25, 0xFF	; 255
     1b3a:	01 96       	adiw	r24, 0x01	; 1
-		
-		if (next_head != tx_tail) {
     1b3c:	90 91 97 07 	lds	r25, 0x0797	; 0x800797 <tx_tail>
     1b40:	89 13       	cpse	r24, r25
     1b42:	05 c0       	rjmp	.+10     	; 0x1b4e <uart_tx+0x30>
-			break; // 버퍼에 공간이 있다면 루프 탈출
-		}
-		
-		// 버퍼가 가득 찼다면, Task를 잠시 Block하여 CPU 양보
-		// 1틱(일반적으로 1ms) 대기하며 다른 Task가 UDRE ISR을 처리하도록 기회 제공
-		vTaskDelay(pdMS_TO_TICKS(1));
     1b44:	81 e0       	ldi	r24, 0x01	; 1
     1b46:	90 e0       	ldi	r25, 0x00	; 0
     1b48:	0e 94 17 08 	call	0x102e	; 0x102e <vTaskDelay>
-	}
     1b4c:	ed cf       	rjmp	.-38     	; 0x1b28 <uart_tx+0xa>
-
-	tx_buffer[tx_head] = data;
     1b4e:	e0 91 98 07 	lds	r30, 0x0798	; 0x800798 <tx_head>
     1b52:	f0 e0       	ldi	r31, 0x00	; 0
     1b54:	e7 52       	subi	r30, 0x27	; 39
     1b56:	f8 4f       	sbci	r31, 0xF8	; 248
     1b58:	c0 83       	st	Z, r28
-	tx_head = next_head;
     1b5a:	80 93 98 07 	sts	0x0798, r24	; 0x800798 <tx_head>
-	
-	// 3. UDRE 인터럽트 활성화 (송신 시작)
-	UCSR0B |= (1 << UDRIE0);
     1b5e:	e1 ec       	ldi	r30, 0xC1	; 193
     1b60:	f0 e0       	ldi	r31, 0x00	; 0
     1b62:	80 81       	ld	r24, Z
     1b64:	80 62       	ori	r24, 0x20	; 32
     1b66:	80 83       	st	Z, r24
-}
     1b68:	cf 91       	pop	r28
     1b6a:	08 95       	ret
 
 00001b6c <uart_rx>:
-
-uint8_t uart_rx() {
-	// RX 버퍼가 비어 있다면, Task를 Block하여 데이터가 올 때까지 대기
-	while (rx_head == rx_tail) {
     1b6c:	04 c0       	rjmp	.+8      	; 0x1b76 <uart_rx+0xa>
-		// FreeRTOS 환경이므로 Polling 대신 Task를 Block/Delay해야 합니다.
-		// 여기서는 간단하게 1ms Delay를 사용합니다. (더 나은 방법은 Semaphore나 Task Notification 사용)
-		vTaskDelay(pdMS_TO_TICKS(1));
     1b6e:	81 e0       	ldi	r24, 0x01	; 1
     1b70:	90 e0       	ldi	r25, 0x00	; 0
     1b72:	0e 94 17 08 	call	0x102e	; 0x102e <vTaskDelay>
-	UCSR0B |= (1 << UDRIE0);
-}
-
-uint8_t uart_rx() {
-	// RX 버퍼가 비어 있다면, Task를 Block하여 데이터가 올 때까지 대기
-	while (rx_head == rx_tail) {
     1b76:	90 91 96 07 	lds	r25, 0x0796	; 0x800796 <rx_head>
     1b7a:	80 91 95 07 	lds	r24, 0x0795	; 0x800795 <rx_tail>
     1b7e:	98 17       	cp	r25, r24
     1b80:	b1 f3       	breq	.-20     	; 0x1b6e <uart_rx+0x2>
-		// FreeRTOS 환경이므로 Polling 대신 Task를 Block/Delay해야 합니다.
-		// 여기서는 간단하게 1ms Delay를 사용합니다. (더 나은 방법은 Semaphore나 Task Notification 사용)
-		vTaskDelay(pdMS_TO_TICKS(1));
-	}
-	uint8_t data = rx_buffer[rx_tail];
     1b82:	e0 91 95 07 	lds	r30, 0x0795	; 0x800795 <rx_tail>
     1b86:	f0 e0       	ldi	r31, 0x00	; 0
     1b88:	e7 56       	subi	r30, 0x67	; 103
     1b8a:	f8 4f       	sbci	r31, 0xF8	; 248
     1b8c:	80 81       	ld	r24, Z
-	rx_tail = (rx_tail + 1) % USART_RX_BUFFER_SIZE;
     1b8e:	20 91 95 07 	lds	r18, 0x0795	; 0x800795 <rx_tail>
     1b92:	30 e0       	ldi	r19, 0x00	; 0
     1b94:	2f 5f       	subi	r18, 0xFF	; 255
@@ -3513,8 +4176,6 @@ uint8_t uart_rx() {
     1ba8:	2f 5f       	subi	r18, 0xFF	; 255
     1baa:	3f 4f       	sbci	r19, 0xFF	; 255
     1bac:	20 93 95 07 	sts	0x0795, r18	; 0x800795 <rx_tail>
-	return data;
-}
     1bb0:	08 95       	ret
 
 00001bb2 <__subsf3>:
