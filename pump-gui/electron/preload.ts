@@ -7,6 +7,19 @@ export type moter_type={
   motor_value:string
 }
 
+// 1. 저장할 설정 데이터의 구조를 정의 (확장성을 위해 분리)
+export interface UserSettings {
+  googleApiKey?: string;
+  // 추후 필요한 설정들을 여기에 추가 (예: themeMode?: string; 등)
+}
+
+// 2. 응답 결과 타입 정의 (선택 사항)
+export interface SaveResponse {
+  success: boolean;
+  error?: any;
+}
+
+
 
 // 렌더러 프로세스(React 앱)에서 'myAPI' 객체로 접근 가능
 contextBridge.exposeInMainWorld('myAPI', {
@@ -26,6 +39,14 @@ contextBridge.exposeInMainWorld('myAPI', {
   all_stop_motor:()=> ipcRenderer.send("all-stop-motor"),
 
   getMotorData:()=>ipcRenderer.invoke('getMotorData'),
+
+  // 설정 불러오기: main.ts의 'get-settings' 채널 호출
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+
+  // 설정 저장하기: main.ts의 'save-settings' 채널 호출 (인자 전달)
+  saveSettings: (settings: UserSettings) => ipcRenderer.invoke('save-settings', settings),
+
+
 
   // 다운로드 진행률 리스너 (콜백을 인자로 받음)
   onDownloadProgress: (callback: (percent: number) => void) => {

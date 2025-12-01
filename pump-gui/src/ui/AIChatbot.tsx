@@ -19,23 +19,17 @@ interface Message {
   isStreaming?: boolean; // 스트리밍 중인지 표시
 }
 
-/**
- * AI 챗봇 컴포넌트 Props
- * @property {string} apiKey - Google AI API 키
- */
-interface AIChatbotProps {
-  apiKey: string;
-}
+
 
 /**
  * AI 챗봇 컴포넌트
  * Google Gemini API를 사용하여 스트리밍 방식으로 대화를 처리합니다.
  */
-const AIChatbot: React.FC<AIChatbotProps> = ({ apiKey }) => {
+const AIChatbot: React.FC = () => {
   // ============================================
   // State 관리
   // ============================================
-
+  const [apiKey,setApiKey]=useState<string>('');
   /** 대화 메시지 목록 */
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -85,6 +79,24 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ apiKey }) => {
         abortControllerRef.current.abort();
       }
     };
+  }, []);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        if (window.myAPI && window.myAPI.getSettings!=undefined){
+          const settings = await window.myAPI.getSettings();
+          if (settings && settings.googleApiKey) {
+            console.log(`loadSettings:${JSON.stringify(settings)}`);
+            setApiKey(settings.googleApiKey);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    };
+
+    loadSettings();
   }, []);
 
   // ============================================

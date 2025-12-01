@@ -274,7 +274,7 @@ const IndexPage: React.FC = () => {
           </CardContent>
         </Card>
         
-        <AIChatbot apiKey={import.meta.env.VITE_GOOGLE_AI_API_KEY} />
+        <AIChatbot/>
       </div>
     </div>
   );

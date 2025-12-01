@@ -6,11 +6,16 @@ import { SerialPort, DelimiterParser } from "serialport";
 import {motor_type,motor_fun_enum} from "./type/main_type"
 import {getDatabase } from './db/db';
 import { autoUpdater } from 'electron-updater';
+import fs from 'fs/promises'; // 비동기 파일 처리를 위해 import
+
 
 const delimiter = Buffer.from('\n', 'utf8');
 let g_port: SerialPort | null = null;
 let g_parser: DelimiterParser | null = null;
 let win: BrowserWindow | null = null;
+const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
+
+
 
 //오토 다운로드 방지
 autoUpdater.autoDownload = false;
@@ -332,6 +337,53 @@ ipcMain.handle('closePort', async () => {
     });
   }
 });
+
+// [불러오기] get-settings
+  ipcMain.handle('get-settings', async () => {
+    try {
+      // 파일이 존재하는지 확인하고 읽기
+      const data = await fs.readFile(settingsFilePath, 'utf-8');
+      return JSON.parse(data);
+    } catch (error: any) {
+      // 파일이 없으면(첫 실행 등) 빈 객체 반환
+      if (error.code === 'ENOENT') {
+        return {}; 
+      }
+      console.error('설정 불러오기 실패:', error);
+      return {}; // 에러 발생 시 빈 객체 반환
+    }
+  });
+
+  // [저장하기] save-settings
+  ipcMain.handle('save-settings', async (event, newSettings: any) => {
+    try {
+      let currentSettings = {};
+      const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
+
+      console.log(`settingsFilePath:${settingsFilePath}`);
+
+      // 1. 기존 설정이 있다면 먼저 읽어옴 (덮어쓰기 방지 및 병합을 위해)
+      try {
+        const data = await fs.readFile(settingsFilePath, 'utf-8');
+        currentSettings = JSON.parse(data);
+      } catch (e) {
+        // 파일이 없으면 무시하고 빈 객체에서 시작
+      }
+
+      // 2. 기존 설정 + 새로운 설정 병합 (Merge)
+      // 예: 기존에 { theme: 'dark' }가 있고, { apiKey: '123' }이 들어오면 합쳐짐
+      const updatedSettings = { ...currentSettings, ...newSettings };
+
+      // 3. 파일에 쓰기 (JSON을 보기 좋게 정렬)
+      await fs.writeFile(settingsFilePath, JSON.stringify(updatedSettings, null, 2));
+
+      return { success: true };
+    } catch (error) {
+      console.error('설정 저장 실패:', error);
+      return { success: false, error };
+    }
+  });
+
 
 app.whenReady().then(() => {
   createWindow();

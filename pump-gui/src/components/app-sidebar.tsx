@@ -1,4 +1,4 @@
-import { ChevronFirst, ChevronLast, Wifi,GaugeCircle, Home } from 'lucide-react';
+import { ChevronFirst, ChevronLast, Wifi,GaugeCircle, Home,Settings } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -61,6 +61,14 @@ export function AppSidebar() {
             >
               <GaugeCircle className="w-5 h-5 transition-colors group-hover:text-blue-600" />
               <span className="font-medium text-sm whitespace-nowrap">대시보드</span>
+            </Link>
+
+            <Link 
+              to="/setting" 
+              className="flex items-center gap-4 p-3 text-gray-600 transition-colors rounded-xl hover:bg-blue-50 hover:text-blue-600 group"
+            >
+              <Settings className="w-5 h-5 transition-colors group-hover:text-blue-600" />
+              <span className="font-medium text-sm whitespace-nowrap">환경설정</span>
             </Link>
           </div>
         </ul>
