@@ -8,4 +8,5 @@
 void timer0_init(void);
 uint32_t millis(void);
 uint32_t micros(void);
-void delay(double ms);
+void delay(double ms,uint32_t *timer);
+void delay1(double ms);

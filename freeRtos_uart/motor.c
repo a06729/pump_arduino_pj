@@ -26,6 +26,10 @@ const double Pump_Flow=2.82;
 //두번째 모터
 const double Pump_Flow_Second=2.92;
 
+
+uint32_t motor1_previous_millis=0;
+uint32_t motor2_previous_millis=0;
+
 void motor_init(){
 	PIN8_DDR |=PIN8_BIT;
 	PIN9_DDR |= PIN9_BIT;
@@ -39,12 +43,12 @@ void motor_W1(int32_t data){
 	double C=0; // 보정 계수 변수 선언
 	
 	if (data <= 50) {
-		C = 0.573; // 작은 양에 대해 이전 보정 계수 사용
+		C = 0.533; // 작은 양에 대해 이전 보정 계수 사용 573
 	}else if(data<=150){
-		C = 0.603; // 작은 양에 대해 이전 보정 계수 사용
+		C = 0.553; // 작은 양에 대해 이전 보정 계수 사용 603
 	}
 	else if(data<=200){
-		C= 0.673;
+		C= 0.603; //673
 	} 
 	else {
 		//0.820 이전값 (275ml를 넣었을시 정확하게 나온다)
@@ -62,9 +66,13 @@ void motor_W1(int32_t data){
 	if (flow_time < MIN_FLOW_TIME_MS) {
 		flow_time = MIN_FLOW_TIME_MS;
 	}
-	
+		
+	delay1(100);
+
 	PORTB |= (1<<PB0);
-	delay(flow_time);
+	//delay1(flow_time);
+
+	delay(flow_time,&motor1_previous_millis);
 	PORTB &= ~(1<<PB0);
 }
 
@@ -76,13 +84,16 @@ void motor_W2(int32_t data){
 	double C=0; // 보정 계수 변수 선언
 	
 	if (data <= 50) {
-		C = 0.573; // 작은 양에 대해 이전 보정 계수 사용
+		C = 0.533; // 작은 양에 대해 이전 보정 계수 사용 573
+	}else if(data<=100){
+		C=0.527;
 	}else if(data<=150){
-		C = 0.580; // 작은 양에 대해 이전 보정 계수 사용
+		C = 0.540; // 작은 양에 대해 이전 보정 계수 사용 580
 	}else if(data<=200){
-		C= 0.673;
+		//0.573
+		C= 0.553;
 	}else {
-		//0.820 이전값 (275ml를 넣었을시 정확하게 나온다)
+		//0.820 이전값 (275ml를 넣었을시 정확하게 나온다) 673
 		C = 0.820; // 큰 양에 대해 새로운 보정 계수 사용 (예시 값)
 	}
 	// 2. 보정된 시간 계산 (단위: 초)
@@ -97,8 +108,12 @@ void motor_W2(int32_t data){
 		flow_time = MIN_FLOW_TIME_MS_M2;
 	}
 	
-	PORTB |= (1<<PB1);
-	delay(flow_time);
+	delay1(100);
+
+	PORTB |= (1<<PB1);	
+	//delay1(flow_time);
+
+	delay(flow_time,&motor2_previous_millis);
 	PORTB &= ~(1<<PB1);
 }
 

@@ -93,10 +93,21 @@ uint32_t micros(void) {
 }
 
 // 딜레이 함수 (밀리초)
-void delay(double ms) {
-	uint32_t start = millis();
+void delay(double ms,uint32_t *timer) {
+	*timer = millis();
 
-	while ((millis() - start) < ms) {
+	while ((millis() - *timer) < ms) {
+		// 대기
+	}
+	*timer=0;
+}
+
+
+// 딜레이 함수 (밀리초)
+void delay1(double ms) {
+	uint32_t prev = millis();
+
+	while ((millis() - prev) < ms) {
 		// 대기
 	}
 }
