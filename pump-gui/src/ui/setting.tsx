@@ -24,10 +24,14 @@ const Setting: React.FC<SettingProps> = () => {
       try {
         if (window.myAPI && window.myAPI.getSettings!=undefined){
           const settings = await window.myAPI.getSettings();
-          if (settings && (settings.googleApiKey||settings.memApiKey)) {
+          if (settings) {
+            if(settings.googleApiKey != undefined){
+              setApiKey(settings.googleApiKey!);
+            }
+            if(settings.memApiKey != undefined){
+              setMemApiKey(settings.memApiKey!);
+            }
             console.log(`loadSettings:${JSON.stringify(settings)}`);
-            setApiKey(settings.googleApiKey!);
-            setMemApiKey(settings.memApiKey!);
           }
         }
       } catch (error) {
