@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Bot, User } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
+import MemoryClient from 'mem0ai';
+
+let memoryClient:MemoryClient;
 
 /**
  * 메시지 인터페이스
@@ -30,6 +33,7 @@ const AIChatbot: React.FC = () => {
   // State 관리
   // ============================================
   const [apiKey,setApiKey]=useState<string>('');
+
   /** 대화 메시지 목록 */
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -86,9 +90,15 @@ const AIChatbot: React.FC = () => {
       try {
         if (window.myAPI && window.myAPI.getSettings!=undefined){
           const settings = await window.myAPI.getSettings();
-          if (settings && settings.googleApiKey) {
+          if (settings ) {
             console.log(`loadSettings:${JSON.stringify(settings)}`);
-            setApiKey(settings.googleApiKey);
+            if(settings.googleApiKey!=undefined){
+              setApiKey(settings.googleApiKey);
+            }
+            if(settings.memApiKey!=undefined){
+              memoryClient=new MemoryClient({ apiKey: settings.memApiKey });
+            }
+
           }
         }
       } catch (error) {
@@ -114,52 +124,73 @@ const AIChatbot: React.FC = () => {
    * 5. 청크 단위로 받은 텍스트를 throttling하여 타이핑 효과로 업데이트
    * 6. 스트리밍 완료 후 isStreaming 플래그 제거
    */
-  const sendMessageStream = async () => {
-    // 입력값 검증
+const sendMessageStream = async () => {
+    // 1. 입력값 검증
     if (!input.trim() || isLoading) return;
 
-    // 사용자 메시지 생성
+    // 2. 사용자 메시지 UI에 추가
     const userMessage: Message = {
       role: 'user',
       content: input,
       timestamp: new Date(),
     };
 
-    // 메시지 목록에 사용자 메시지 추가
     setMessages(prev => [...prev, userMessage]);
-
-    // 현재 입력값 저장 (프롬프트에 사용)
-    const currentInput = input;
-
-    // 입력 필드 초기화
-    setInput('');
-
-    // 로딩 상태 시작 (이 시점에는 assistant 메시지를 추가하지 않음)
-    setIsLoading(true);
+    
+    const currentInput = input; 
+    setInput(''); 
+    setIsLoading(true); 
 
     try {
-      // ============================================
-      // 스트림 중단을 위한 AbortController 생성
-      // ============================================
       abortControllerRef.current = new AbortController();
-
-      // Google AI 클라이언트 초기화
       const ai = new GoogleGenAI({ apiKey });
 
       // ============================================
-      // 프롬프트 구성
+      // 3. mem0 기억 검색 (순서 보장 로직)
       // ============================================
+      let retrievedContext = "";
+      
+      console.log("1. mem0 검색 시작..."); // 디버깅용 로그
 
-      // 대화 히스토리 구성 (이전 대화 내용)
+      try {
+        // [중요] 여기서 await가 풀릴 때까지 다음 줄로 넘어가지 않습니다.
+        const searchResults = await memoryClient.search(currentInput, { 
+          user_id: "j2m", 
+        });
+
+        console.log("2. mem0 검색 완료:", searchResults); // 결과 확인
+
+        if (searchResults && searchResults.length > 0) {
+          const memories = searchResults.map((item: any) => `- ${item.memory}`).join('\n');
+          retrievedContext = `\n[기억된 관련 정보(Context)]\n${memories}\n(위 정보는 사용자와의 과거 대화에서 기억한 내용입니다. 답변에 참고하세요.)\n`;
+        }
+      } catch (memError) {
+        console.warn("3. 메모리 검색 실패 (무시하고 진행):", memError);
+      }
+
+      // ============================================
+      // 4. 프롬프트 구성 (반드시 검색이 끝난 후 실행됨)
+      // ============================================
+      // 검색이 끝나기 전에는 이 코드가 실행되지 않으므로 retrievedContext가 비어있을 수 없음(데이터가 있다면)
       const conversationHistory = messages
         .map(msg => `${msg.role === 'user' ? '사용자' : 'AI'}: ${msg.content}`)
         .join('\n');
 
-      // 최종 프롬프트 생성
-      const prompt = `당신은 AI 어시스턴트입니다. 사용자의 질문에 친절하고 정확하게 답변해주세요.\n\n이전 대화:\n${conversationHistory}\n\n사용자: ${currentInput}\n\nAI:`;
+      const prompt = `당신은 AI 어시스턴트입니다. 사용자의 질문에 친절하고 정확하게 답변해주세요.
+
+${retrievedContext}
+
+이전 대화:
+${conversationHistory}
+
+사용자: ${currentInput}
+
+AI:`;
+
+      console.log("4. AI 요청 시작"); // 시점 확인용
 
       // ============================================
-      // 스트리밍 방식으로 AI 응답 요청 (Google Search 활성화)
+      // 5. 스트리밍 AI 응답 요청
       // ============================================
       const stream = await ai.models.generateContentStream({
         model: 'gemini-2.0-flash',
@@ -170,32 +201,26 @@ const AIChatbot: React.FC = () => {
       });
 
       // ============================================
-      // 타이핑 효과를 위한 변수
+      // 변수 초기화
       // ============================================
-      let fullText = ''; // 전체 텍스트 (서버에서 받은 모든 내용)
-      let displayedText = ''; // 현재 화면에 표시된 텍스트
-      let assistantMessageAdded = false; // assistant 메시지 추가 여부
-      let assistantMessageIndex = -1; // assistant 메시지의 인덱스
-      const typingSpeed = 30; // 타이핑 속도 (ms) - 작을수록 빠름
+      let fullText = ''; 
+      let displayedText = ''; 
+      let assistantMessageAdded = false; 
+      let assistantMessageIndex = -1; 
+      const typingSpeed = 30; 
 
       // ============================================
-      // 스트림에서 청크 단위로 데이터 받기 및 버퍼에 저장
+      // 6. 스트림 데이터 수신
       // ============================================
       const streamPromise = (async () => {
         for await (const chunk of stream) {
-          // 중단 신호 체크
-          if (abortControllerRef.current?.signal.aborted) {
-            break;
-          }
+          if (abortControllerRef.current?.signal.aborted) break;
 
-          // 청크에서 텍스트 추출하여 전체 텍스트에 추가
           const chunkText = chunk.text || '';
           fullText += chunkText;
 
-          // 첫 번째 청크가 도착하면 로딩 종료 및 메시지 생성
           if (!assistantMessageAdded) {
-            setIsLoading(false);
-
+            setIsLoading(false); // 첫 데이터가 와야 로딩이 끝남
             setMessages(prev => {
               const newMessages = [...prev];
               newMessages.push({
@@ -206,82 +231,93 @@ const AIChatbot: React.FC = () => {
               });
               return newMessages;
             });
-
-            assistantMessageIndex = messages.length + 1;
+            assistantMessageIndex = messages.length + 1; 
             assistantMessageAdded = true;
           }
         }
       })();
 
       // ============================================
-      // 타이핑 효과 - 글자 단위로 하나씩 표시
+      // 7. 타이핑 효과
       // ============================================
       const typingInterval = setInterval(() => {
-        // 중단 신호 체크
         if (abortControllerRef.current?.signal.aborted) {
           clearInterval(typingInterval);
           return;
         }
 
-        // 아직 표시할 글자가 남아있는 경우
         if (displayedText.length < fullText.length) {
-          // 다음 글자 추가
           displayedText = fullText.slice(0, displayedText.length + 1);
 
-          // 화면 업데이트
           if (assistantMessageAdded) {
             setMessages(prev => {
               const newMessages = [...prev];
-              newMessages[assistantMessageIndex] = {
-                role: 'assistant',
-                content: displayedText,
-                timestamp: new Date(),
-                isStreaming: true,
-              };
+              const targetIndex = newMessages.length - 1;
+              
+              if (targetIndex >= 0 && newMessages[targetIndex].role === 'assistant') {
+                 newMessages[targetIndex] = {
+                  ...newMessages[targetIndex],
+                  content: displayedText,
+                  isStreaming: true,
+                };
+              }
               return newMessages;
             });
           }
         }
       }, typingSpeed);
 
-      // 스트림 완료 대기
       await streamPromise;
 
       // ============================================
-      // 남은 글자 모두 표시하고 타이핑 효과 종료
+      // 8. mem0에 대화 내용 저장
+      // ============================================
+      if (fullText) {
+        const messagesToSave = [
+          { role: "user", content: currentInput },
+          { role: "assistant", content: fullText }
+        ];
+
+        memoryClient.add(messagesToSave, { user_id: "j2m" })
+          .then(() => console.log("Memory saved"))
+          .catch((err) => console.error("Memory save failed:", err));
+      }
+
+      // ============================================
+      // 9. 잔여 타이핑 처리 및 종료
       // ============================================
       const finishTyping = setInterval(() => {
         if (displayedText.length < fullText.length) {
-          // 남은 글자가 있으면 계속 타이핑
           displayedText = fullText.slice(0, displayedText.length + 1);
 
           if (assistantMessageAdded) {
             setMessages(prev => {
               const newMessages = [...prev];
-              newMessages[assistantMessageIndex] = {
-                role: 'assistant',
-                content: displayedText,
-                timestamp: new Date(),
-                isStreaming: true,
-              };
+              const targetIndex = newMessages.length - 1;
+              if (targetIndex >= 0) {
+                 newMessages[targetIndex] = {
+                  ...newMessages[targetIndex],
+                  content: displayedText,
+                };
+              }
               return newMessages;
             });
           }
         } else {
-          // 타이핑 완료
           clearInterval(typingInterval);
           clearInterval(finishTyping);
 
-          // 스트리밍 완료 처리
           if (assistantMessageAdded) {
             setMessages(prev => {
               const newMessages = [...prev];
-              newMessages[assistantMessageIndex] = {
-                role: 'assistant',
-                content: fullText || '응답을 생성할 수 없습니다.',
-                timestamp: new Date(),
-                isStreaming: false, // 스트리밍 완료
-              };
+              const targetIndex = newMessages.length - 1;
+              if (targetIndex >= 0) {
+                newMessages[targetIndex] = {
+                  ...newMessages[targetIndex],
+                  content: fullText || '응답을 생성할 수 없습니다.',
+                  isStreaming: false,
+                };
+              }
               return newMessages;
             });
           }
@@ -289,28 +325,21 @@ const AIChatbot: React.FC = () => {
       }, typingSpeed);
 
     } catch (error) {
-      // ============================================
-      // 에러 처리
-      // ============================================
       console.error('AI 응답 오류:', error);
-
-      // 에러 메시지 추가
       const errorMessage: Message = {
         role: 'assistant',
-        content: '죄송합니다. 응답 중 오류가 발생했습니다. API 키를 확인해주세요.',
+        content: '죄송합니다. 응답 중 오류가 발생했습니다.',
         timestamp: new Date(),
         isStreaming: false,
       };
-
       setMessages(prev => [...prev, errorMessage]);
     } finally {
-      // 로딩 상태 종료 (혹시 모를 경우를 대비)
-      setIsLoading(false);
-      // AbortController 초기화
+      if (!messages.some(m => m.isStreaming)) {
+          setIsLoading(false);
+      }
       abortControllerRef.current = null;
     }
   };
-
   // ============================================
   // 비스트리밍 - 미사용
   // ============================================

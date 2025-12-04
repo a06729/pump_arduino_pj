@@ -1,7 +1,7 @@
 {
   "name": "pump-gui",
   "private": true,
-  "version": "0.0.6",
+  "version": "0.0.8",
   "main": "dist/electron/main/main.js",
   "scripts": {
     "dev": "vite",
@@ -78,13 +78,15 @@
     "drizzle-orm": "^0.44.7",
     "electron-updater": "^6.6.2",
     "lucide-react": "^0.552.0",
+    "mem0ai": "^1.0.39",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.6",
     "recharts": "^3.4.1",
     "serialport": "^13.0.0",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.16"
+    "tailwindcss": "^4.1.16",
+    "undici": "^7.16.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
@@ -96,7 +98,7 @@
     "babel-plugin-react-compiler": "^19.1.0-rc.3",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "drizzle-kit": "^0.31.7",
+    "drizzle-kit": "^0.18.1",
     "electron": "^39.1.0",
     "electron-builder": "^26.0.12",
     "electron-rebuild": "^3.2.9",

@@ -10,6 +10,7 @@ export type moter_type={
 // 1. 저장할 설정 데이터의 구조를 정의 (확장성을 위해 분리)
 export interface UserSettings {
   googleApiKey?: string;
+  memApiKey?:string;
   // 추후 필요한 설정들을 여기에 추가 (예: themeMode?: string; 등)
 }
 

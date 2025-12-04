@@ -26,7 +26,8 @@ export default defineConfig({
                 'better-sqlite3',
                 'drizzle-orm',
                 'drizzle-orm/sqlite-core',
-                'drizzle-orm/better-sqlite3'
+                'drizzle-orm/better-sqlite3',
+                'mem0ai'
               ],
               output: {
                 format: 'cjs',
@@ -59,6 +60,9 @@ export default defineConfig({
     ]),
     renderer(),
   ],
+  define: {
+    'process.env': {},
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

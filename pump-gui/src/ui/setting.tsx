@@ -13,8 +13,9 @@ interface SettingProps {
 declare global { interface Window { myAPI: myApi; } }
 
 
-const Setting: React.FC<SettingProps> = ({ onApiKeyChange }) => {
+const Setting: React.FC<SettingProps> = () => {
   const [apiKey, setApiKey] = useState('');
+  const [memApiKey,setMemApiKey]=useState('');
   const [loading, setLoading] = useState(true);
 
   // 컴포넌트 마운트 시 settings.json에서 API Key 불러오기
@@ -23,10 +24,10 @@ const Setting: React.FC<SettingProps> = ({ onApiKeyChange }) => {
       try {
         if (window.myAPI && window.myAPI.getSettings!=undefined){
           const settings = await window.myAPI.getSettings();
-          if (settings && settings.googleApiKey) {
+          if (settings && (settings.googleApiKey||settings.memApiKey)) {
             console.log(`loadSettings:${JSON.stringify(settings)}`);
-            setApiKey(settings.googleApiKey);
-            onApiKeyChange?.(settings.googleApiKey); // 앱 전역 상태 업데이트
+            setApiKey(settings.googleApiKey!);
+            setMemApiKey(settings.memApiKey!);
           }
         }
       } catch (error) {
@@ -37,19 +38,24 @@ const Setting: React.FC<SettingProps> = ({ onApiKeyChange }) => {
     };
 
     loadSettings();
-  }, [onApiKeyChange]);
+  }, []);
 
   const handleSave = async () => {
     const trimmedKey = apiKey.trim();
-    if (!trimmedKey) return;
+    const trimmedMemKey=memApiKey.trim();
+    
+    if (!trimmedKey && !trimmedMemKey) return;
     console.log(`trimmedKey:${trimmedKey}`);
+    console.log(`trimmedMemKey:${trimmedMemKey}`);
 
     if (window.myAPI && window.myAPI.saveSettings!=undefined){
-      const result = await window.myAPI.saveSettings({ googleApiKey: trimmedKey });
+      const result = await window.myAPI.saveSettings({ 
+        googleApiKey: trimmedKey,
+        memApiKey:trimmedMemKey
+      });
       console.log(`result:${result}`);
       // Electron을 통해 파일 저장
       if (result.success) {
-        onApiKeyChange?.(trimmedKey);
         console.log('Saved Google API Key to settings.json');
         // 여기에 "저장 완료" Toast 등을 띄울 수 있습니다.
       } else {
@@ -62,14 +68,13 @@ const Setting: React.FC<SettingProps> = ({ onApiKeyChange }) => {
 
   const clearKey = async () => {
     setApiKey('');
+    setMemApiKey('');
     
     // settings.json에서 키 제거 (빈 값으로 업데이트)
-    
-    const result = await window.myAPI.saveSettings({ googleApiKey: '' });
+    const result = await window.myAPI.saveSettings({ googleApiKey: '',memApiKey:'' });
     
     if (result.success) {
-      onApiKeyChange?.('');
-      console.log('Google API Key removed from settings.json');
+      console.log('API Keys removed from settings.json');
     }
   };
 
@@ -84,13 +89,13 @@ const Setting: React.FC<SettingProps> = ({ onApiKeyChange }) => {
         <div className="max-w-6xl mx-auto space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Google API Key</CardTitle>
-              <CardDescription>Google GenAI API Key를 로컬 파일에 저장하여 사용합니다.</CardDescription>
+              <CardTitle>API Key 설정</CardTitle>
+              <CardDescription>API Key를 로컬 파일에 저장하여 사용합니다.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-3 items-end">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="apiKey">API Key</Label>
+                  <Label htmlFor="apiKey">Google API Key</Label>
                   <Input 
                     id="apiKey" 
                     type="password" // 보안상 가리기
@@ -99,13 +104,30 @@ const Setting: React.FC<SettingProps> = ({ onApiKeyChange }) => {
                     placeholder="sk-..." 
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSave} disabled={!apiKey.trim()}>저장</Button>
-                  <Button variant="secondary" onClick={clearKey}>지우기</Button>
-                </div>
               </div>
             </CardContent>
+            <CardContent>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="apiKey">Mem0 api Key</Label>
+                  <Input 
+                    type="password" // 보안상 가리기
+                    value={memApiKey} 
+                    onChange={(e) => setMemApiKey(e.target.value)} 
+                    placeholder="sk-..." 
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-1.5">
+                  <Button className='mr-10' onClick={handleSave} disabled={!memApiKey.trim()}>저장</Button>
+                  <Button variant="secondary" onClick={clearKey}>전체 지우기</Button>
+              </div>
+
+            </CardContent>
           </Card>
+
+
         </div>
       </main>
     </div>

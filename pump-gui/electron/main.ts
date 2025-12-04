@@ -8,12 +8,12 @@ import {getDatabase } from './db/db';
 import { autoUpdater } from 'electron-updater';
 import fs from 'fs/promises'; // 비동기 파일 처리를 위해 import
 
-
 const delimiter = Buffer.from('\n', 'utf8');
 let g_port: SerialPort | null = null;
 let g_parser: DelimiterParser | null = null;
 let win: BrowserWindow | null = null;
 const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
+
 
 
 
