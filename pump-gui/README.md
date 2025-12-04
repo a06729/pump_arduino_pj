@@ -41,3 +41,9 @@ NODE_MODULE_INIT(/* exports, context */) {
     // ...
 }
 
+
+## 🐛 3. API키 저장 방식
+
+API 키 저장 방식
+C:\Users\현재 계정이름\AppData\Roaming\pump-gui\settings.json
+
