@@ -20,7 +20,7 @@ export function AppSidebar() {
             {/* 아이콘이 찌그러지지 않도록 min-w-fit 설정 */}
             <Wifi className="text-blue-600 min-w-fit" />
             {/* 텍스트 줄바꿈 방지 */}
-            <span className="font-semibold text-gray-800 whitespace-nowrap">MyApp</span>
+            <span className="font-semibold text-gray-800 whitespace-nowrap">양액 제조기</span>
           </div>
 
           {/* 기존 코드에 있던 {!expanded && <Wifi ... />} 부분은 삭제했습니다 (요청하신 대로 안 보이게 하기 위해) */}

@@ -162,8 +162,7 @@ const IndexPage: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-4 p-4">
 
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">시리얼 통신 3</h1>
-          <p className="text-slate-600">Web Serial API를 사용한 시리얼 포트 통신</p>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">양액 제조기</h1>
         </div>
         {error && (
           <Alert variant="destructive">
@@ -175,7 +174,7 @@ const IndexPage: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>연결 설정</CardTitle>
-            <CardDescription>시리얼 포트에 연결하기 위한 설정</CardDescription>
+            <CardDescription>제품 연결을 위한 설정</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4 items-end">
@@ -231,8 +230,8 @@ const IndexPage: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>데이터 송신</CardTitle>
-            <CardDescription>시리얼 포트로 데이터 전송</CardDescription>
+            <CardTitle>양액양 설정</CardTitle>
+            <CardDescription>양액양 데이터 전송</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex  justify-center">
