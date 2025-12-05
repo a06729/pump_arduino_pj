@@ -162,7 +162,7 @@ const IndexPage: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-4 p-4">
 
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">양액 제조기</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">양액 제조기 v10</h1>
         </div>
         {error && (
           <Alert variant="destructive">
