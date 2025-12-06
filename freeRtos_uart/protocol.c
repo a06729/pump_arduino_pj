@@ -29,7 +29,6 @@ extern TaskHandle_t xMotor2_Handle;
 uint8_t g_device_registers[16] = {0};
 
 /**
- * @brief PDF 프로토콜에 정의된 체크섬을 계산합니다. 
  * @param buffer '$'를 제외한 패킷 데이터 (ID부터 Checksum 앞까지)
  * @param length 체크섬 계산에 포함될 바이트 수
  * @return 계산된 체크섬

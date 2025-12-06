@@ -130,10 +130,9 @@ int main(void) {
     uart_init(BAUD);
 	//모터 초기화
 	motor_init();
+	//타이머 초기화 함수
 	timer0_init();
-    
-
-	
+    	
     // 큐 생성: 64개의 8비트(uint8_t) 요소를 저장
     // 수신 버퍼링을 위해 넉넉하게 설정
     xUartQueue = xQueueCreate(64, sizeof(uint8_t));
