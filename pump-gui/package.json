@@ -1,7 +1,7 @@
 {
   "name": "pump-gui",
   "private": true,
-  "version": "0.0.9",
+  "version": "0.0.10",
   "main": "dist/electron/main/main.js",
   "scripts": {
     "dev": "vite",
@@ -98,7 +98,7 @@
     "babel-plugin-react-compiler": "^19.1.0-rc.3",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "drizzle-kit": "^0.18.1",
+    "drizzle-kit": "^0.31.8",
     "electron": "^39.1.0",
     "electron-builder": "^26.0.12",
     "electron-rebuild": "^3.2.9",
