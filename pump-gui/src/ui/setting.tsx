@@ -40,11 +40,12 @@ const Setting: React.FC<SettingProps> = () => {
         setLoading(false);
       }
     };
-
     loadSettings();
   }, []);
 
+  //API Key 정보를 파일에 저장하기 위한 함수
   const handleSave = async () => {
+    //공백 제거하고 변수에 저장
     const trimmedKey = apiKey.trim();
     const trimmedMemKey=memApiKey.trim();
     
@@ -53,6 +54,7 @@ const Setting: React.FC<SettingProps> = () => {
     console.log(`trimmedMemKey:${trimmedMemKey}`);
 
     if (window.myAPI && window.myAPI.saveSettings!=undefined){
+      //API Key를 파일에 저장하는 함수
       const result = await window.myAPI.saveSettings({ 
         googleApiKey: trimmedKey,
         memApiKey:trimmedMemKey
@@ -66,10 +68,9 @@ const Setting: React.FC<SettingProps> = () => {
         console.error('Failed to save settings');
       }
     }
-
-
   };
 
+  //저장된 API key 정보 전부 삭제 함수
   const clearKey = async () => {
     setApiKey('');
     setMemApiKey('');

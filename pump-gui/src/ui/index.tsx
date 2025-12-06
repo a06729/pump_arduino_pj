@@ -11,7 +11,6 @@ import { AppSidebar } from "@/components/app-sidebar"
 import type {myApi} from "../type/apiType"
 import AIChatbot from './AIChatbot';
 
-
 type motor_type={
   //모터 첫번쨰 두번쨰 인지 확인하는 값
   id:number,
@@ -35,11 +34,6 @@ async function getSerialPorts(){
       return ports;
 }
 
-// async function getMotorData(){
-//       const motorData = await window.myAPI.getMotorData();
-//       console.log('사용 가능한 포트:', motorData);
-//       return motorData;
-// }
 
 const IndexPage: React.FC = () => {
   //시리얼 포트 정보 satae 함수
@@ -81,44 +75,49 @@ const IndexPage: React.FC = () => {
 
 
   useEffect(() => {
-        if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
-          getSerialPorts().then((ports)=>{
-            console.log('사용 가능한 포트:', ports);
-            setPortList(ports);
-            setSelectedPort(ports[0].path);
-            console.log(`ports:${ports[0].path}`);
-          });
-        } else {
-          console.error('myAPI.sendMessage is not available on window object.');
-        }
-  }, []);
+          //사용 가능한 시리얼포트 확인하기 위한 로직
+          if (window.myAPI && window.myAPI.getSerialPorts!=undefined) {
+            getSerialPorts().then((ports)=>{
+              console.log('사용 가능한 포트:', ports);
+              //현재 연결 가능한 시리얼 포트를 전부 가져와서 Sate에 저장하는 기능
+              setPortList(ports);
+              setSelectedPort(ports[0].path);
+              console.log(`ports:${ports[0].path}`);
+            });
+          } else {
+            // 연결 가능한 시리얼 포트가 없을시 에러 문자를 띄우는 경우
+            console.error('myAPI.sendMessage is not available on window object.');
+          }
+    }, []);
 
   //시리얼 연결 함수
   const connect = async () => {
-
+    //함수 존재 여부 체킹을 위한 if문
     if (window.myAPI && window.myAPI.connectPorts) {
       console.log(`baudRate 값:${baudRate}`);
+      //electron에 시리얼 포트를 연결하기 위한 함수
       const success = await window.myAPI.connectPorts(selectedPort,baudRate);
       if (success) {
+        //연결 선공시 Sate 저장
         setIsConnected(true);
       } else {
+        //연결 실패시 Sate 저장
         setError('포트 연결 실패');
         setIsConnected(false);
       }
     }
-
     console.log(`${selectedPort} 포트에 연결되었습니다 (Baud Rate: ${baudRate})`);
   };
+
   //시리얼 포트 연결 해제 함수
   const disconnect = async () => {
     if (window.myAPI && window.myAPI.closePort) {
+        //electron에 시리얼 포트 연결 해제 함수
         await window.myAPI.closePort();
-        // 더미 연결 해제
         setIsConnected(false);
         setError('');
         console.log(`${selectedPort} 포트 연결이 해제되었습니다`);
     }
-
   };
 
   //첫번째 모터에 값을 전송하기 위한 함수
@@ -146,6 +145,8 @@ const IndexPage: React.FC = () => {
     setInputMoter_S('');
     setError('');
   };
+
+  
   //모든 모터 정지
   const all_stop_motor=async()=>{
     console.log("긴급정지");

@@ -32,23 +32,25 @@ function calculate_checksum(buffer: number[]): number {
     return sum & 0xFF; // 8비트 오버플로우(하위 1바이트)만 반환
 }
 
+// 화면를 만들어주는 함수
 function createWindow() {
   win = new BrowserWindow({
-    width: 1920,
-    height: 1024,
+    width: 1920, //넓이
+    height: 1024,// 높이
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
     },
   });
   console.log(`VITE_DEV_SERVER_URL:${VITE_DEV_SERVER_URL}`);
+  //개발자 모들일때 실행
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
     win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, '../../index.html'));
     win.webContents.openDevTools();
+    //업데이트 정보가 있는지 확인하는 함수
     autoUpdater.checkForUpdatesAndNotify();
-
   }
 }
 
@@ -72,7 +74,6 @@ function setupParserListeners() {
     }    
 
     if (data.length >= 8) {
-      
       // 2. 4번째 바이트(인덱스 4)부터 32비트(4바이트)를 Big Endian으로 읽기
       // (data[4], data[5], data[6], data[7] 조합)
       try {
@@ -187,17 +188,21 @@ ipcMain.handle('connectPorts', async (event, portName: string,baudRate:string) =
 
 //모터 데이터 정보를 sqlite에서 가져오는 함수
 ipcMain.handle('getMotorData',async ()=>{
+    //DB 연결 인스턴스 불러오는 함수
     const { db } = getDatabase();
+    //DB 스키마를 불러오기 위한 변수
     const { motor } = await import('./db/schema/schema');
+    //DB 정보 가져오는 함수
     const motorData = db.select().from(motor);
     console.log(motorData.all());
     return motorData.all();
 });
 
+// 시리얼 포트 정보를 가져오기 위한 함수
 ipcMain.handle('getSerialPorts', async () => {
   const port_list: { path: string; manufacturer?: string }[] = [];
-  
   try {
+    //현재 PC에 연결된 시리얼 포트 정보 가져오는 함수
     const port_response = await SerialPort.list();
     port_response.forEach((p) => {
       port_list.push({
@@ -212,6 +217,7 @@ ipcMain.handle('getSerialPorts', async () => {
   }
 });
 
+//모든 모터를 멈추게 하는 함수
 ipcMain.on('all-stop-motor', (event, message) => {
     let byteArray:number[]=[];
 
@@ -250,6 +256,7 @@ ipcMain.on('all-stop-motor', (event, message) => {
  
 });
 
+//시리얼 통신을 이용한 모터에 명령를 내리는 함수
 ipcMain.on('cmd-channel', (event, message:motor_type) => {
     let byteArray:number[]=[];
     console.log(`message:${JSON.stringify(message)}`)
@@ -266,8 +273,6 @@ ipcMain.on('cmd-channel', (event, message:motor_type) => {
         console.error('[Write Error] 유효하지 않은 숫자 값입니다:', message.motor_value);
         return;
     }
-
-
 
     // 2. 32비트 정수를 4개의 8비트 바이트로 분해 (Big-Endian 순서)
     // 예: 260 (0x00000104)
@@ -415,7 +420,7 @@ autoUpdater.on('checking-for-update', () => {
   console.log('업데이트 확인 중...');
 });
 
-// 2. [수정됨] 업데이트가 가능함 -> 다이얼로그 띄우기
+// 2.업데이트가 가능함 -> 다이얼로그 띄우기
 autoUpdater.on('update-available', (info) => {
   console.log('업데이트 발견:', info.version);
 
@@ -445,7 +450,6 @@ autoUpdater.on('update-available', (info) => {
 // 3. 업데이트가 없음
 autoUpdater.on('update-not-available', (info) => {
   console.log('현재 최신 버전입니다.');
-  // 앱 시작 시마다 "최신 버전입니다" 창이 뜨면 귀찮으므로 여기선 로그만 남기는 게 좋습니다.
 });
 
 // 4. 다운로드 진행 중
@@ -459,7 +463,7 @@ autoUpdater.on('download-progress', (progressObj) => {
   win?.webContents.send('download-progress', progressObj.percent);
 });
 
-// 5. [기존 유지] 다운로드 완료 -> 재시작 여부 묻기
+// 5.다운로드 완료 -> 재시작 여부 묻기
 autoUpdater.on('update-downloaded', (info) => {
   console.log('다운로드 완료.');
   
@@ -480,11 +484,7 @@ autoUpdater.on('update-downloaded', (info) => {
   }
 });
 
-// 6. [추가됨] 에러 발생 시 사용자에게 알림 (선택 사항)
+// 6 에러 발생 시 사용자에게 알림 (선택 사항)
 autoUpdater.on('error', (err) => {
   console.error('에러 발생:', err);
-  // if (win) {
-  //     dialog.showErrorBox('업데이트 에러', '업데이트 중 문제가 발생했습니다.\n' + (err.message || err));
-  // }
-  
 });

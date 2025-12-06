@@ -20,12 +20,10 @@ export interface SaveResponse {
   error?: any;
 }
 
-
-
 // 렌더러 프로세스(React 앱)에서 'myAPI' 객체로 접근 가능
 contextBridge.exposeInMainWorld('myAPI', {
   
-  // 예시: 메인 프로세스로 메시지 보내기
+  // 메인 프로세스로 메시지 보내기
   sendMessage: (message: moter_type) => ipcRenderer.send('cmd-channel', message),
   
   // 시리얼 포트 리스트 가져오는 함수
@@ -37,8 +35,10 @@ contextBridge.exposeInMainWorld('myAPI', {
   //시리얼 포트 연결 해제 함수
   closePort:()=> ipcRenderer.invoke('closePort'),
 
+  //모든 모터를 멈추는 함수
   all_stop_motor:()=> ipcRenderer.send("all-stop-motor"),
 
+  //모터 용액 사용량을 물러오는 함수
   getMotorData:()=>ipcRenderer.invoke('getMotorData'),
 
   // 설정 불러오기: main.ts의 'get-settings' 채널 호출
@@ -46,8 +46,6 @@ contextBridge.exposeInMainWorld('myAPI', {
 
   // 설정 저장하기: main.ts의 'save-settings' 채널 호출 (인자 전달)
   saveSettings: (settings: UserSettings) => ipcRenderer.invoke('save-settings', settings),
-
-
 
   // 다운로드 진행률 리스너 (콜백을 인자로 받음)
   onDownloadProgress: (callback: (percent: number) => void) => {

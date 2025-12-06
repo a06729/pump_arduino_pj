@@ -8,6 +8,7 @@ import path from "path";
 let sqlite: Database.Database;
 let db: ReturnType<typeof drizzle>;
 
+//데이터 베이스 초기화
 export function initDatabase() {
   try {
     const dbPath = getDatabasePath();
@@ -23,7 +24,7 @@ export function initDatabase() {
     
     sqlite = new Database(dbPath);
     
-    // 설정
+    // 데이터 베이스 설정
     sqlite.pragma("journal_mode = WAL");
     sqlite.pragma("synchronous = NORMAL");
     sqlite.pragma("foreign_keys = ON");
@@ -93,7 +94,7 @@ export function initDatabase() {
     throw error;
   }
 }
-
+//데이터 베이스 접속 생성자 생성하는 함수
 export function getDatabase() {
   if (!db || !sqlite) {
     return initDatabase();

@@ -22,16 +22,8 @@ interface Message {
   isStreaming?: boolean; // 스트리밍 중인지 표시
 }
 
-
-
-/**
- * AI 챗봇 컴포넌트
- * Google Gemini API를 사용하여 스트리밍 방식으로 대화를 처리합니다.
- */
 const AIChatbot: React.FC = () => {
-  // ============================================
-  // State 관리
-  // ============================================
+  //google 제미나이 API key State
   const [apiKey,setApiKey]=useState<string>('');
 
   /** 대화 메시지 목록 */
@@ -49,22 +41,12 @@ const AIChatbot: React.FC = () => {
   /** 스트림 중단을 위한 AbortController 참조 */
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // ============================================
-  // 유틸리티 함수
-  // ============================================
-
   /**
    * 메시지 목록의 맨 아래로 스크롤
    */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
-
-
-  // ============================================
-  // Effect Hooks
-  // ============================================
 
   /**
    * 메시지가 추가될 때마다 자동 스크롤
@@ -86,16 +68,19 @@ const AIChatbot: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    //API 키 정보 불러오는 함수
     const loadSettings = async () => {
       try {
         if (window.myAPI && window.myAPI.getSettings!=undefined){
+          //PC에 저장된 API Key 파일 정보를 읽어서 Json 문자열로 가져오는 함수
           const settings = await window.myAPI.getSettings();
-          if (settings ) {
+          if (settings) {
             console.log(`loadSettings:${JSON.stringify(settings)}`);
             if(settings.googleApiKey!=undefined){
               setApiKey(settings.googleApiKey);
             }
             if(settings.memApiKey!=undefined){
+              //mem0의 API 서비스를 사용하기 위한 Client 변수
               memoryClient=new MemoryClient({ apiKey: settings.memApiKey });
             }
 
@@ -105,7 +90,6 @@ const AIChatbot: React.FC = () => {
         console.error('Failed to load settings:', error);
       }
     };
-
     loadSettings();
   }, []);
 
@@ -144,10 +128,6 @@ const sendMessageStream = async () => {
     try {
       abortControllerRef.current = new AbortController();
       const ai = new GoogleGenAI({ apiKey });
-
-      // ============================================
-      // 3. mem0 기억 검색 (순서 보장 로직)
-      // ============================================
       let retrievedContext = "";
       
       console.log("1. mem0 검색 시작..."); // 디버깅용 로그
@@ -168,30 +148,20 @@ const sendMessageStream = async () => {
         console.warn("3. 메모리 검색 실패 (무시하고 진행):", memError);
       }
 
-      // ============================================
-      // 4. 프롬프트 구성 (반드시 검색이 끝난 후 실행됨)
-      // ============================================
-      // 검색이 끝나기 전에는 이 코드가 실행되지 않으므로 retrievedContext가 비어있을 수 없음(데이터가 있다면)
+      // 프롬프트 구성 (반드시 검색 후 실행)
       const conversationHistory = messages
         .map(msg => `${msg.role === 'user' ? '사용자' : 'AI'}: ${msg.content}`)
         .join('\n');
 
       const prompt = `당신은 AI 어시스턴트입니다. 사용자의 질문에 친절하고 정확하게 답변해주세요.
-
-${retrievedContext}
-
-이전 대화:
-${conversationHistory}
-
-사용자: ${currentInput}
-
-AI:`;
+                      ${retrievedContext}
+                      이전 대화:${conversationHistory}
+                      사용자: ${currentInput}
+                      AI:`;
 
       console.log("4. AI 요청 시작"); // 시점 확인용
 
-      // ============================================
-      // 5. 스트리밍 AI 응답 요청
-      // ============================================
+      //스트리밍 AI 응답 요청
       const stream = await ai.models.generateContentStream({
         model: 'gemini-2.0-flash',
         contents: prompt,
@@ -200,18 +170,15 @@ AI:`;
         },
       });
 
-      // ============================================
+     
       // 변수 초기화
-      // ============================================
       let fullText = ''; 
       let displayedText = ''; 
       let assistantMessageAdded = false; 
       let assistantMessageIndex = -1; 
       const typingSpeed = 30; 
 
-      // ============================================
-      // 6. 스트림 데이터 수신
-      // ============================================
+      //스트림 데이터 수신
       const streamPromise = (async () => {
         for await (const chunk of stream) {
           if (abortControllerRef.current?.signal.aborted) break;
@@ -237,9 +204,8 @@ AI:`;
         }
       })();
 
-      // ============================================
-      // 7. 타이핑 효과
-      // ============================================
+      
+      // 타이핑 효과
       const typingInterval = setInterval(() => {
         if (abortControllerRef.current?.signal.aborted) {
           clearInterval(typingInterval);
@@ -269,9 +235,7 @@ AI:`;
 
       await streamPromise;
 
-      // ============================================
-      // 8. mem0에 대화 내용 저장
-      // ============================================
+      // mem0에 대화 내용 저장     
       if (fullText) {
         const messagesToSave = [
           { role: "user", content: currentInput },
@@ -283,9 +247,7 @@ AI:`;
           .catch((err) => console.error("Memory save failed:", err));
       }
 
-      // ============================================
-      // 9. 잔여 타이핑 처리 및 종료
-      // ============================================
+      // 잔여 타이핑 처리 및 종료
       const finishTyping = setInterval(() => {
         if (displayedText.length < fullText.length) {
           displayedText = fullText.slice(0, displayedText.length + 1);
@@ -340,6 +302,9 @@ AI:`;
       abortControllerRef.current = null;
     }
   };
+
+
+
   // ============================================
   // 비스트리밍 - 미사용
   // ============================================

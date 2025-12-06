@@ -19,6 +19,7 @@ interface ChartData extends GroupedData {
   key: string;
 }
 
+//모터로 사용한 용액의 양을 전부 가져오기 위한 함수
 async function getMotorData() {
   const motorData = await window.myAPI.getMotorData();
   return motorData;
@@ -28,13 +29,15 @@ const MotorUsageDashboard = () => {
   const [data, setData] = useState<MotorData[]>([]);
   const [chartType, setChartType] = useState<'bar' | 'line' | 'area'>('bar');
 
+
+  //화면 로딩전에 모터 용액 사용량을 정보를 가져오기 위한 함수
   useEffect(() => {
     getMotorData().then((res) => {
       setData(res || []);
     });
   }, []);
 
-// --- [수정됨] 주별 데이터 (최근 7일 기준) ---
+// --- 주별 데이터 (최근 7일 기준) ---
   const weeklyData = useMemo(() => {
     const today = new Date();
     
@@ -68,7 +71,6 @@ const MotorUsageDashboard = () => {
     // 데이터 매핑
     data.forEach(item => {
       const itemDate = new Date(item.time);
-      
       if (!isNaN(itemDate.getTime())) {
         const dateKey = formatKey(itemDate);
 
